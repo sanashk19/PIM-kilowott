@@ -62,13 +62,13 @@ describe('Product Catalog API Vertical Slice', () => {
   });
 
   it('PUT /api/v1/products/:id should update product and transition sync_status to modified if previously synced', async () => {
-    // Product 1 is synced
-    const res = await request(app).put('/api/v1/products/1').send({
-      regular_price: 13499,
+    // Product 6 is synced
+    const res = await request(app).put('/api/v1/products/6').send({
+      regular_price: 3899,
     });
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.regular_price).toBe(13499);
+    expect(res.body.data.regular_price).toBe(3899);
     expect(res.body.data.sync_status).toBe('modified');
   });
 
