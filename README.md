@@ -19,7 +19,7 @@
 | Resource | Link |
 | :--- | :--- |
 | **📺 Final Demo Video Presentation** | [**Watch the 2-Minute Demo Video (Google Drive)**](https://drive.google.com/file/d/1jzfqT4E4G15af83WNGp6SMc7oZ38JXBQ/view?usp=sharing) |
-| **📋 Planning & Architecture Video** | [**Watch the Planning & Architecture Video Here**](YOUR_PLANNING_VIDEO_LINK_HERE) *(Paste your link here)* |
+| **📋 Planning & Architecture Video** | [**Watch the Planning & Architecture Video Here**](https://drive.google.com/file/d/1UfM49b6mcOLZVVBDw3-pE-QSco_kzzEw/view?usp=sharing) |
 | **📁 GitHub Repository** | [**https://github.com/sanashk19/PIM-kilowott**](https://github.com/sanashk19/PIM-kilowott) |
 | **🌐 Application Frontend** | `http://localhost:5173/` (Landing) · `http://localhost:5173/app/overview` (Workspace) |
 | **⚙️ Backend API** | `http://127.0.0.1:8000/` (Express API) · `http://127.0.0.1:8000/health` (Health Check) |
