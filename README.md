@@ -10,6 +10,21 @@
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38bdf8.svg)](https://tailwindcss.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-Better--SQLite3-orange.svg)](https://github.com/WiseLibs/better-sqlite3)
 [![Vitest](https://img.shields.io/badge/Vitest-30%2F30%20Tests%20Passing-success.svg)](https://vitest.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+---
+
+## 📌 Hackathon Submission Links
+
+| Resource | Link |
+| :--- | :--- |
+| **📺 Demo Video Presentation** | [**Watch the 2-Minute Demo Video Here**](https://youtu.be/YOUR_VIDEO_LINK_HERE) *(Replace with your YouTube / Loom / Drive link)* |
+| **📁 GitHub Repository** | [**https://github.com/sanashk19/PIM-kilowott**](https://github.com/sanashk19/PIM-kilowott) |
+| **🌐 Application Frontend** | `http://localhost:5173/` (Landing) · `http://localhost:5173/app/overview` (Workspace) |
+| **⚙️ Backend API** | `http://127.0.0.1:8000/` (Express API) · `http://127.0.0.1:8000/health` (Health Check) |
+
+> 💡 **Hackathon Evaluator Notice:**  
+> The 2-minute video presentation demonstrates all 6 core scenarios: Three-Way Diff, Deterministic Guardrail Block, AI Agent Trace, Blast Radius Score, Source-of-Truth Policy Resolution, and Immutable 1-Click Rollback.
 
 ---
 
