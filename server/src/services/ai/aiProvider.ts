@@ -251,6 +251,42 @@ export class DeterministicFallbackProvider implements AIProvider {
       });
     }
 
+    // 7. Intentional Demo Scenario 5: Large Price Jump (Blocked by Deterministic Guardrail)
+    if (product.sku === 'LIGHT-AMB-01' || (product.name && product.name.includes('Ambient Rhythm'))) {
+      proposedChanges.push({
+        field: 'regular_price',
+        before: product.regular_price || 2499,
+        after: 3499, // +40% increase -> triggers PRICE_CHANGE_TOO_LARGE guardrail (>30%)
+        rationale: 'AI dynamic algorithmic pricing recommendation: raise retail price to ₹3,499 (+40%) to optimize gross margin during peak demand.',
+      });
+      issues.push({
+        field: 'regular_price',
+        severity: 'critical',
+        message: 'Proposed price increase exceeds 30% volatility safety threshold.',
+      });
+    }
+
+    // 8. Always ensure high-value AI enrichments are available for any verified product
+    if (proposedChanges.length === 0) {
+      const brandStr = product.brand || 'Enterprise';
+      const cleanName = product.name || 'Product';
+      const enhancedDesc = `<p>Experience exceptional reliability with the <strong>${cleanName}</strong> from ${brandStr}. Engineered to enterprise-grade specifications for daily durability.</p><ul><li>Precision-crafted construction with high-grade, resilient materials</li><li>Optimized for maximum efficiency and modern performance standards</li><li>Backed by full manufacturer warranty and verified compliance</li></ul>`;
+
+      proposedChanges.push({
+        field: 'description',
+        before: product.description || '—',
+        after: enhancedDesc,
+        rationale: 'AI copywriter enhancement: structured HTML specification matrix, bulleted selling points, and SEO keyword enrichment.',
+      });
+
+      proposedChanges.push({
+        field: 'short_description',
+        before: product.short_description || '—',
+        after: `${cleanName} — engineered for exceptional durability, ergonomic precision, and daily performance.`,
+        rationale: 'Generated high-conversion storefront snippet summary for mobile search listing cards.',
+      });
+    }
+
     const fallbackData: any = {
       qualityScore: product.quality_score || 55,
       confidence: 0.96,

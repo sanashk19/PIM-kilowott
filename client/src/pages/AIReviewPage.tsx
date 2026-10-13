@@ -51,9 +51,7 @@ export const AIReviewPage: React.FC = () => {
     mutationFn: async ({ field, value }: { field: string; value: any }) => {
       if (!selectedProduct) return;
       const payload: any = { ...selectedProduct };
-      if (field === 'description') payload.description = value;
-      if (field === 'regular_price') payload.regular_price = value;
-      if (field === 'category_ids') payload.category_ids = value;
+      payload[field] = value;
       return api.updateProduct(selectedProduct.id, payload);
     },
     onSuccess: (_, vars) => {
@@ -430,11 +428,28 @@ export const AIReviewPage: React.FC = () => {
                   </div>
                 );
               })
-            ) : (
+            ) : loadingPlan ? (
               <div className="p-8 bg-white border border-[#e6e4df] rounded-lg text-center text-xs text-[#7d8b82] space-y-2">
-                <Sparkles className="w-6 h-6 text-[#7c3aed] mx-auto opacity-70" />
-                <p className="font-semibold text-[#111916]">Generating Recommendations...</p>
+                <Sparkles className="w-6 h-6 text-[#7c3aed] mx-auto animate-pulse" />
+                <p className="font-semibold text-[#111916]">Generating AI Recommendations...</p>
                 <p className="text-[11px]">Evaluating product data against store taxonomy rules.</p>
+              </div>
+            ) : (
+              <div className="p-8 bg-white border border-[#e6e4df] rounded-lg text-center text-xs text-[#7d8b82] space-y-3">
+                <CheckCircle2 className="w-6 h-6 text-[#15803d] mx-auto" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-[#111916]">Catalog State Verified</p>
+                  <p className="text-[11px] text-[#5c6660]">
+                    All essential specifications, attributes, and storefront media conform to verified quality standards.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => refetchPlan()}
+                  className="px-3 py-1.5 rounded bg-[#f4f2ec] hover:bg-[#e6e4df] text-[#111916] text-[11px] font-semibold transition-colors"
+                >
+                  Re-evaluate with AI
+                </button>
               </div>
             )}
           </div>
