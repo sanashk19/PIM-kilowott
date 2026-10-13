@@ -71,7 +71,7 @@ export const SyncInspectorPage: React.FC = () => {
   const diff = diffData?.data;
 
   return (
-    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col">
       <TopBar breadcrumbs={['Operations', 'Sync Inspector']} />
 
       <div className="p-6 max-w-7xl w-full mx-auto space-y-6">

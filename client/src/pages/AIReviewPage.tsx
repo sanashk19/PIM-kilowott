@@ -67,7 +67,7 @@ export const AIReviewPage: React.FC = () => {
     'Experience immersive, studio-grade sound with the Apex Pro Wireless Headphones. Engineered with 40mm titanium acoustic drivers, adaptive active noise cancellation, and ultra-plush memory foam earcups for unmatched all-day listening comfort.';
 
   return (
-    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col">
       <TopBar breadcrumbs={['Operations', 'AI Review']} />
 
       <div className="p-6 max-w-7xl w-full mx-auto space-y-6">
@@ -192,7 +192,7 @@ export const AIReviewPage: React.FC = () => {
           <div className="lg:col-span-4 space-y-4">
             {/* Analysis Complete Card with Robot Assistant */}
             <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-bold text-sm text-[#111916]">Analysis Complete</h3>
                   <p className="text-xs text-[#5c6660] mt-0.5 leading-snug">
@@ -200,9 +200,9 @@ export const AIReviewPage: React.FC = () => {
                   </p>
                 </div>
                 <img
-                  src="/assets/robot-assistant.svg"
-                  alt="AI Assistant"
-                  className="w-12 h-12 shrink-0 -mt-1"
+                  src="/assets/robot-assistant.png"
+                  alt="AI Assistant Robot"
+                  className="w-16 h-16 object-contain shrink-0 drop-shadow-sm -mt-2"
                 />
               </div>
 

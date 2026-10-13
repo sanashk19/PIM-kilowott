@@ -45,47 +45,47 @@ export const WooCommercePage: React.FC = () => {
             name: 'Apex Pro Wireless Headphones',
             regular_price: 7499,
             stock_quantity: 20,
-            image_url: '/assets/products/headphones.svg',
+            image_url: '/assets/products/headphones.jpg',
           },
           {
             woo_id: 103,
             name: 'Ethiopian Dark Roast 500g',
             regular_price: 899,
             stock_quantity: 110,
-            image_url: '/assets/products/coffee.svg',
+            image_url: '/assets/products/coffee.jpg',
           },
           {
             woo_id: 104,
             name: 'Ambient LED Light Bar',
             regular_price: 2499,
             stock_quantity: 60,
-            image_url: '/assets/products/led-bar.svg',
+            image_url: '/assets/products/led-bar.jpg',
           },
           {
             woo_id: 105,
             name: 'AeroPress Travel Brew Kit',
             regular_price: 3499,
             stock_quantity: 15,
-            image_url: '/assets/products/brewer.svg',
+            image_url: '/assets/products/brewer.jpg',
           },
           {
             woo_id: 106,
             name: 'Leather Crossbody Bag',
             regular_price: 5099,
             stock_quantity: 18,
-            image_url: '/assets/products/leather-bag.svg',
+            image_url: '/assets/products/leather-bag.jpg',
           },
           {
             woo_id: 102,
             name: 'KeyCraft RGB Keyboard',
             regular_price: 3499,
             stock_quantity: 0,
-            image_url: '/assets/products/keyboard.svg',
+            image_url: '/assets/products/keyboard.jpg',
           },
         ];
 
   return (
-    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col">
       <TopBar
         breadcrumbs={['Integrations', 'WooCommerce']}
         search={searchTerm}

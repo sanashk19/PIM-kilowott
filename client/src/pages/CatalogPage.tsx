@@ -142,7 +142,7 @@ export const CatalogPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col">
       <TopBar
         breadcrumbs={['Workspace', 'Catalog']}
         search={search}

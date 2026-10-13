@@ -16,9 +16,9 @@ import {
 
 export const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#fbfaf8] text-[#19201d] font-sans antialiased selection:bg-[#15803d]/20 selection:text-[#15803d]">
+    <div className="min-h-screen bg-white text-[#19201d] font-sans antialiased selection:bg-[#15803d]/20 selection:text-[#15803d]">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 bg-[#fbfaf8]/90 backdrop-blur-md border-b border-[#e6e4df]">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#e6e4df]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#111916] text-[#4ade80] flex items-center justify-center font-bold">
@@ -181,11 +181,11 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Interactive Card Preview */}
-          <div className="mt-6 p-4 rounded-lg bg-[#fbfaf8] border border-[#e6e4df] flex flex-col sm:flex-row items-center gap-4">
+          <div className="mt-6 p-4 rounded-lg bg-slate-50 border border-[#e6e4df] flex flex-col sm:flex-row items-center gap-4">
             <img
-              src="/assets/robot-assistant.svg"
+              src="/assets/robot-assistant.png"
               alt="PIM Sentinel AI Assistant"
-              className="w-14 h-14 shrink-0"
+              className="w-16 h-16 object-contain shrink-0 drop-shadow-sm"
             />
             <div className="flex-1 text-xs">
               <div className="font-semibold text-[#111916]">

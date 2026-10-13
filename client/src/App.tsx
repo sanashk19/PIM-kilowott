@@ -25,12 +25,12 @@ const queryClient = new QueryClient({
 // Authenticated Application Workspace Shell
 const AppWorkspaceShell: React.FC = () => {
   return (
-    <div className="flex min-h-screen bg-[#fbfaf8] text-[#19201d] font-sans antialiased">
-      {/* Deep dark charcoal/green sidebar */}
+    <div className="flex min-h-screen bg-white text-[#19201d] font-sans antialiased">
+      {/* Deep dark charcoal/green resizable sidebar */}
       <Sidebar />
 
       {/* Main Work Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-white">
         <Outlet />
       </main>
     </div>

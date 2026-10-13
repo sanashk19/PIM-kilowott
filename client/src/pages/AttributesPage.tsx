@@ -78,7 +78,7 @@ export const AttributesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col">
       <TopBar breadcrumbs={['Workspace', 'Attributes']} />
 
       <div className="p-6 max-w-7xl w-full mx-auto space-y-6">

@@ -99,7 +99,7 @@ export function runSeed(): void {
     7499, null, 15, 1,
     'Active noise cancelling headphones with deep bass response.',
     'Studio headphones featuring 40mm drivers.',
-    '/assets/products/headphones.svg', 'Sony', null, 'not_synced', 57,
+    '/assets/products/headphones.jpg', 'Sony', null, 'not_synced', 57,
     JSON.stringify([
       { rule: 'description_length', field: 'description', severity: 'high', message: 'Missing rich product description with specifications' },
       { rule: 'attribute_completeness', field: 'attributes', severity: 'medium', message: 'Missing key attributes (Color, Connectivity)' },
@@ -118,7 +118,7 @@ export function runSeed(): void {
     6999, 6499, 24, 1,
     '<p>Lightweight over-ear wireless headphones with quick acoustic tuning and dynamic transparency mode.</p>',
     'Comfortable everyday wireless headset with 30-hour playback.',
-    '/assets/products/headphones.svg', 'Sony', 101, 'modified', 55,
+    '/assets/products/headphones.jpg', 'Sony', 101, 'modified', 55,
     JSON.stringify([
       { rule: 'conflict_detected', field: 'price', severity: 'high', message: 'PIM price ₹6,999 differs from WooCommerce price ₹7,999' },
       { rule: 'stock_conflict', field: 'stock_quantity', severity: 'high', message: 'PIM stock 24 differs from WooCommerce stock 20' }
@@ -130,7 +130,7 @@ export function runSeed(): void {
     101, 'Apex Pro Wireless Headphones', 'aero-01-woo', 'AERO-02', 'simple', 'publish',
     7999, null, 20, // Remote values divergent!
     '<p>Legacy WooCommerce product description.</p>', 'Legacy short desc',
-    '/assets/products/headphones.svg', 'Sony',
+    '/assets/products/headphones.jpg', 'Sony',
     JSON.stringify([{ id: 11, name: 'Footwear', slug: 'footwear' }]), // Deliberate category mismatch demo
     JSON.stringify([])
   );
@@ -141,7 +141,7 @@ export function runSeed(): void {
     5566, 4999, 10, 1,
     '<p>75% compact mechanical keyboard with gasket mount design and pre-lubed mechanical switches.</p>',
     'Hot-swappable RGB keyboard with aluminum volume knob.',
-    '/assets/products/keyboard.svg', 'KeyCraft', 102, 'modified', 55,
+    '/assets/products/keyboard.jpg', 'KeyCraft', 102, 'modified', 55,
     JSON.stringify([
       { rule: 'stock_depleted', field: 'stock', severity: 'medium', message: 'Remote WooCommerce stock is currently 0 (Out of stock)' }
     ]),
@@ -152,7 +152,7 @@ export function runSeed(): void {
   mockWooStmt.run(
     102, 'KeyCraft RGB Hot-Swappable Mechanical Keyboard', 'keycraft-rgb-kb', 'KEY-02', 'simple', 'publish',
     3499, 2999, 0, // Out of stock in mock store
-    'Mechanical keyboard', 'KeyCraft RGB', '/assets/products/keyboard.svg', 'KeyCraft',
+    'Mechanical keyboard', 'KeyCraft RGB', '/assets/products/keyboard.jpg', 'KeyCraft',
     JSON.stringify([{ id: 12, name: 'Computer Peripherals', slug: 'computer-peripherals' }]),
     JSON.stringify([{ name: 'Connectivity', options: ['USB-C Wired'] }])
   );
@@ -163,7 +163,7 @@ export function runSeed(): void {
     3499, 2999, 15, 1,
     '<p>All-in-one travel coffee press featuring silicone sealing ring, micro-filters, and compact mug casing.</p>',
     'Ultra-portable coffee press for smooth, grit-free espresso-style coffee.',
-    '/assets/products/brewer.svg', 'AeroCraft', null, 'not_synced', 87,
+    '/assets/products/brewer.jpg', 'AeroCraft', null, 'not_synced', 87,
     JSON.stringify([
       { rule: 'attribute_options', field: 'attributes', severity: 'low', message: 'Capacity specification not linked' }
     ]),
@@ -178,7 +178,7 @@ export function runSeed(): void {
     2499, 1999, 60, 1,
     '<p>Sound-reactive RGB ambient light bar with desktop mounts and dual spectrum color blending.</p>',
     'Dynamic ambient light bar with wireless sync.',
-    '/assets/products/led-bar.svg', 'LuminaTech', null, 'not_synced', 62,
+    '/assets/products/led-bar.jpg', 'LuminaTech', null, 'not_synced', 62,
     JSON.stringify([
       { rule: 'category_path', field: 'categories', severity: 'medium', message: 'Category sub-taxonomies should be mapped' }
     ]),
@@ -192,7 +192,7 @@ export function runSeed(): void {
     899, 799, 110, 1,
     '<p>Hand-harvested Yirgacheffe single-origin dark roast with notes of wild berries and rich dark chocolate.</p>',
     '500g whole bean specialty roasted Ethiopian Arabica coffee.',
-    '/assets/products/coffee.svg', 'OriginRoasts', 103, 'synced', 92,
+    '/assets/products/coffee.jpg', 'OriginRoasts', 103, 'synced', 92,
     JSON.stringify([]),
     new Date(Date.now() - 14400000).toISOString()
   );
@@ -202,7 +202,7 @@ export function runSeed(): void {
     103, 'Ethiopian Dark Roast Coffee', 'ethiopian-dark-roast', 'FOOD-COF-006', 'simple', 'publish',
     899, 799, 110,
     '500g whole bean specialty roast.', 'Ethiopian Arabica Coffee 500g',
-    '/assets/products/coffee.svg', 'OriginRoasts',
+    '/assets/products/coffee.jpg', 'OriginRoasts',
     JSON.stringify([{ id: 15, name: 'Grocery', slug: 'grocery' }]),
     JSON.stringify([{ name: 'Size', options: ['500g'] }])
   );
@@ -213,7 +213,7 @@ export function runSeed(): void {
     5099, 4599, 18, 1,
     '<p>Full-grain vegetable-tanned leather messenger bag with solid antique brass hardware and adjustable strap.</p>',
     'Artisanal handcrafted leather crossbody bag.',
-    '/assets/products/leather-bag.svg', 'Heritage', 104, 'synced', 88,
+    '/assets/products/leather-bag.jpg', 'Heritage', 104, 'synced', 88,
     JSON.stringify([]),
     new Date(Date.now() - 28800000).toISOString()
   );
@@ -223,7 +223,7 @@ export function runSeed(): void {
     104, 'Leather Crossbody Bag', 'leather-crossbody-bag', 'BAG-LTH-01', 'simple', 'publish',
     5099, 4599, 18,
     'Full-grain leather bag', 'Handcrafted leather crossbody bag',
-    '/assets/products/leather-bag.svg', 'Heritage',
+    '/assets/products/leather-bag.jpg', 'Heritage',
     JSON.stringify([{ id: 16, name: 'Fashion & Accessories', slug: 'fashion-accessories' }]),
     JSON.stringify([])
   );
@@ -234,7 +234,7 @@ export function runSeed(): void {
     14999, 12999, 8, 1,
     '<p>Titanium case with always-on retina display, precision fitness tracking, ECG sensor, and water resistance to 50m.</p>',
     'Flagship smartwatch with multi-day battery and biometric sensors.',
-    '/assets/products/smartwatch.svg', 'ChronoTech', 105, 'synced', 78,
+    '/assets/products/smartwatch.jpg', 'ChronoTech', 105, 'synced', 78,
     JSON.stringify([]),
     new Date(Date.now() - 43200000).toISOString()
   );
@@ -244,7 +244,7 @@ export function runSeed(): void {
     105, 'Smart Watch Series 5', 'smart-watch-series-5', 'WATCH-S5', 'simple', 'publish',
     14999, 12999, 8,
     'Flagship smartwatch', 'Smart Watch Series 5',
-    '/assets/products/smartwatch.svg', 'ChronoTech',
+    '/assets/products/smartwatch.jpg', 'ChronoTech',
     JSON.stringify([{ id: 11, name: 'Electronics', slug: 'electronics' }]),
     JSON.stringify([{ name: 'Color', options: ['Matte Black'] }])
   );

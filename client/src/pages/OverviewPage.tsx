@@ -46,7 +46,7 @@ export const OverviewPage: React.FC = () => {
   ).length || 5;
 
   return (
-    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+    <div className="flex-1 bg-white min-h-screen flex flex-col">
       <TopBar breadcrumbs={['Workspace', 'Overview']} />
 
       <div className="p-6 max-w-7xl w-full mx-auto space-y-6">
@@ -279,10 +279,10 @@ export const OverviewPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* LEFT: Lifestyle/Product Studio Section (from reference panel 1) */}
           <div className="lg:col-span-6 bg-white border border-[#e6e4df] rounded-lg overflow-hidden shadow-2xs flex flex-col">
-            <div className="relative h-44 sm:h-52 overflow-hidden bg-[#ebe9e2]">
+            <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-100">
               <img
-                src="/assets/products/workspace-hero.svg"
-                alt="Workspace desk environment"
+                src="/assets/products/workspace-hero.jpg"
+                alt="MacBook Pro Workspace Desk"
                 className="w-full h-full object-cover object-center"
               />
               <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-[#111916]/80 backdrop-blur-xs text-white text-[10px] font-medium flex items-center gap-1.5">

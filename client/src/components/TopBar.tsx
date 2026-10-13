@@ -38,7 +38,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             value={search ?? ''}
             onChange={(e) => onSearchChange?.(e.target.value)}
             placeholder="Search products, SKU, category..."
-            className="w-full pl-9 pr-14 py-1.5 bg-[#fbfaf8] hover:bg-white focus:bg-white border border-[#e6e4df] rounded-md text-xs text-[#19201d] placeholder:text-[#8c948e] focus:outline-none focus:ring-1 focus:ring-[#15803d] focus:border-[#15803d] transition-all"
+            className="w-full pl-9 pr-14 py-1.5 bg-slate-50 hover:bg-white focus:bg-white border border-[#e6e4df] rounded-md text-xs text-[#19201d] placeholder:text-[#8c948e] focus:outline-none focus:ring-1 focus:ring-[#15803d] focus:border-[#15803d] transition-all"
           />
           <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#8c948e] font-sans bg-white border border-[#e6e4df] px-1.5 py-0.5 rounded shadow-2xs">
             Ctrl K
