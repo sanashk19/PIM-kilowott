@@ -61,7 +61,7 @@ export const checkWooCommerceStateTool: AgentTool<{ wooId: number | null }, { re
 // 5. detect_conflicts
 export const detectConflictsTool: AgentTool<{ productId: number }, { hasConflicts: boolean; diffs: DiffItem[] }> = {
   name: 'detect_conflicts',
-  description: 'Runs pre-flight diff inspection to identify discrepancies between PIM Sentinel and WooCommerce.',
+  description: 'Runs pre-flight diff inspection to identify discrepancies between VERIDEX and WooCommerce.',
   async execute({ productId }) {
     const preflight = await SyncService.getPreFlightDiff(productId);
     return {
@@ -147,3 +147,95 @@ export const writeAuditLogTool: AgentTool<{
     return { logId: log.id };
   },
 };
+
+// ==========================================================
+// MCP Core Operations Tools (Section 18)
+// Exposes VERIDEX core operations as cleanly isolated tools
+// ==========================================================
+
+// 10. list_products
+export const listProductsTool: AgentTool<{ category?: string; search?: string }, { products: Product[]; total: number }> = {
+  name: 'list_products',
+  description: 'Lists all products in the VERIDEX catalog with optional category or search filters.',
+  async execute({ category, search }) {
+    let products = ProductRepository.getAll();
+    if (search) {
+      const q = search.toLowerCase();
+      products = products.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+    }
+    return { products, total: products.length };
+  },
+};
+
+// 11. get_product
+export const getProductTool: AgentTool<{ productId: number }, { product: Product }> = {
+  name: 'get_product',
+  description: 'Retrieves complete canonical VERIDEX product by ID including attributes and quality issues.',
+  async execute({ productId }) {
+    const product = ProductRepository.getById(productId);
+    if (!product) throw new Error(`Product #${productId} not found`);
+    return { product };
+  },
+};
+
+// 12. get_product_diff
+export const getProductDiffTool: AgentTool<{ productId: number }, { diff: any }> = {
+  name: 'get_product_diff',
+  description: 'Computes three-way diff (Baseline vs VERIDEX vs WooCommerce) with field-level conflict detection.',
+  async execute({ productId }) {
+    const diff = await SyncService.getPreFlightDiff(productId);
+    return { diff };
+  },
+};
+
+// 13. dry_run_sync
+export const dryRunSyncTool: AgentTool<{ productId: number }, { dryRun: any }> = {
+  name: 'dry_run_sync',
+  description: 'Performs dry run synchronization calculating blast-radius score without altering WooCommerce.',
+  async execute({ productId }) {
+    const diff = await SyncService.getPreFlightDiff(productId);
+    return {
+      dryRun: {
+        productId,
+        ready: !diff.has_conflicts,
+        has_conflicts: diff.has_conflicts,
+        blastRadius: diff.blastRadius,
+        diffCount: diff.diffs.length,
+      },
+    };
+  },
+};
+
+// 14. validate_changeset
+export const validateChangesetTool: AgentTool<{ changesetId: string }, { changeset: any }> = {
+  name: 'validate_changeset',
+  description: 'Validates an AI or bulk changeset using deterministic guardrails.',
+  async execute({ changesetId }) {
+    const { ChangesetRepository } = await import('../../../repositories/changesetRepository.js');
+    const cs = ChangesetRepository.getById(changesetId);
+    if (!cs) throw new Error(`Changeset ${changesetId} not found`);
+    return { changeset: cs };
+  },
+};
+
+// 15. apply_changeset
+export const applyChangesetTool: AgentTool<{ changesetId: string; approvedChanges?: any[] }, { result: any }> = {
+  name: 'apply_changeset',
+  description: 'Applies an approved changeset to the VERIDEX catalog and logs the execution.',
+  async execute({ changesetId, approvedChanges }) {
+    const { AIBulkActionService } = await import('../aiBulkActionService.js');
+    const result = await AIBulkActionService.applyChangeset(changesetId, approvedChanges);
+    return { result };
+  },
+};
+
+// 16. rollback_sync
+export const rollbackSyncTool: AgentTool<{ logId: number }, { result: any }> = {
+  name: 'rollback_sync',
+  description: 'Safely rolls back a previously synchronized state using the immutable audit ledger snapshot.',
+  async execute({ logId }) {
+    const result = await SyncService.rollbackSync(logId);
+    return { result };
+  },
+};
+

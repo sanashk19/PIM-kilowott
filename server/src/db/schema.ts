@@ -23,6 +23,7 @@ export function initializeSchema(): void {
       sync_status TEXT DEFAULT 'not_synced',
       quality_score INTEGER DEFAULT 0,
       quality_issues TEXT,
+      baseline_snapshot TEXT,
       last_synced_at TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -96,7 +97,23 @@ export function initializeSchema(): void {
       request_payload TEXT,
       response_payload TEXT,
       error_message TEXT,
+      previous_snapshot TEXT,
+      changeset_id TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_changesets (
+      id TEXT PRIMARY KEY,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      source TEXT NOT NULL,
+      target TEXT NOT NULL,
+      products TEXT NOT NULL,
+      field_changes TEXT NOT NULL,
+      validation_results TEXT NOT NULL,
+      risk_level TEXT NOT NULL,
+      approval_status TEXT NOT NULL,
+      execution_status TEXT NOT NULL,
+      applied_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS ai_agent_runs (
@@ -116,4 +133,15 @@ export function initializeSchema(): void {
       value TEXT NOT NULL
     );
   `);
+
+  // Safe migrations for preexisting DB files
+  try {
+    db.exec('ALTER TABLE products ADD COLUMN baseline_snapshot TEXT;');
+  } catch (_) {}
+  try {
+    db.exec('ALTER TABLE sync_logs ADD COLUMN previous_snapshot TEXT;');
+  } catch (_) {}
+  try {
+    db.exec('ALTER TABLE sync_logs ADD COLUMN changeset_id TEXT;');
+  } catch (_) {}
 }

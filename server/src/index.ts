@@ -6,7 +6,7 @@ import { initializeSchema } from './db/schema.js';
 initializeSchema();
 
 app.listen(config.port, () => {
-  console.log(`🚀 PIM Sentinel API server running on http://127.0.0.1:${config.port}`);
+  console.log(`🚀 VERIDEX API server running on http://127.0.0.1:${config.port}`);
   console.log(`📦 Database: ${config.dbPath}`);
   console.log(`🤖 AI Provider: ${config.ai.provider}`);
   console.log(`🛒 WooCommerce Driver: ${config.woo.activeDriver}`);

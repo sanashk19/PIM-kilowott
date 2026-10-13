@@ -187,4 +187,40 @@ export class AIController {
       },
     });
   }
+
+  public static async bulkAction(req: Request, res: Response): Promise<void> {
+    const { prompt } = req.body;
+    if (!prompt || typeof prompt !== 'string') {
+      res.status(422).json({ success: false, message: 'Natural language prompt is required.' });
+      return;
+    }
+
+    try {
+      const changeset = await (await import('../services/ai/aiBulkActionService.js')).AIBulkActionService.interpretBulkAction(prompt);
+      res.json({
+        success: true,
+        data: changeset,
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Bulk interpretation failed.' });
+    }
+  }
+
+  public static async applyChangeset(req: Request, res: Response): Promise<void> {
+    const { changesetId, approvedProductIds } = req.body;
+    if (!changesetId) {
+      res.status(422).json({ success: false, message: 'changesetId is required.' });
+      return;
+    }
+
+    try {
+      const result = await (await import('../services/ai/aiBulkActionService.js')).AIBulkActionService.applyBulkChangeset(
+        changesetId,
+        approvedProductIds
+      );
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message || 'Failed to apply changeset.' });
+    }
+  }
 }

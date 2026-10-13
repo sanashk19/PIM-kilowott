@@ -26,7 +26,7 @@ app.use('/api/v1/ai', aiRouter);
 app.get('/', (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
-    service: 'PIM Sentinel API Server',
+    service: 'VERIDEX API Server',
     version: '1.0.0',
     health: '/health',
     api_prefix: '/api/v1',
@@ -36,7 +36,7 @@ app.get('/', (_req: Request, res: Response) => {
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', service: 'PIM Sentinel API', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'VERIDEX API', timestamp: new Date().toISOString() });
 });
 
 // Centralized error handler

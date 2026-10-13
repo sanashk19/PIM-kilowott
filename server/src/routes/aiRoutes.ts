@@ -7,3 +7,5 @@ aiRouter.post('/analyze-product/:id', AIController.analyzeProduct);
 aiRouter.post('/audit-catalog', AIController.auditCatalog);
 aiRouter.post('/agent/plan/:id', AIController.agentPlan);
 aiRouter.post('/agent/execute/:runId', AIController.agentExecute);
+aiRouter.post('/bulk-action', AIController.bulkAction);
+aiRouter.post('/apply-changeset', AIController.applyChangeset);

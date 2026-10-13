@@ -42,6 +42,15 @@ export class ProductRepository {
       }
     }
 
+    let baseline_snapshot: Record<string, any> | null = null;
+    if (r.baseline_snapshot) {
+      try {
+        baseline_snapshot = JSON.parse(r.baseline_snapshot);
+      } catch {
+        baseline_snapshot = null;
+      }
+    }
+
     return {
       id: r.id,
       name: r.name,
@@ -61,6 +70,7 @@ export class ProductRepository {
       sync_status: r.sync_status || 'not_synced',
       quality_score: r.quality_score !== null ? Number(r.quality_score) : 0,
       quality_issues,
+      baseline_snapshot,
       last_synced_at: r.last_synced_at || null,
       created_at: r.created_at,
       updated_at: r.updated_at,
@@ -129,11 +139,13 @@ export class ProductRepository {
         INSERT INTO products (
           name, slug, sku, type, status, regular_price, sale_price,
           stock_quantity, manage_stock, description, short_description,
-          image_url, brand, woo_id, sync_status, quality_score, quality_issues
+          image_url, brand, woo_id, sync_status, quality_score, quality_issues,
+          baseline_snapshot
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?
+          ?, ?, ?, ?, ?, ?,
+          ?
         )
       `);
 
@@ -154,7 +166,8 @@ export class ProductRepository {
         data.woo_id || null,
         data.sync_status || 'not_synced',
         data.quality_score ?? 0,
-        data.quality_issues ? JSON.stringify(data.quality_issues) : null
+        data.quality_issues ? JSON.stringify(data.quality_issues) : null,
+        data.baseline_snapshot ? JSON.stringify(data.baseline_snapshot) : null
       );
 
       const productId = Number(info.lastInsertRowid);
@@ -200,7 +213,7 @@ export class ProductRepository {
         'name', 'slug', 'sku', 'type', 'status', 'regular_price', 'sale_price',
         'stock_quantity', 'manage_stock', 'description', 'short_description',
         'image_url', 'brand', 'woo_id', 'sync_status', 'quality_score',
-        'last_synced_at'
+        'last_synced_at', 'baseline_snapshot'
       ];
 
       for (const key of updatableKeys) {
@@ -208,6 +221,8 @@ export class ProductRepository {
           fields.push(`${key} = ?`);
           if (key === 'manage_stock') {
             params.push(data[key] ? 1 : 0);
+          } else if (key === 'baseline_snapshot') {
+            params.push(data[key] ? JSON.stringify(data[key]) : null);
           } else {
             params.push(data[key]);
           }

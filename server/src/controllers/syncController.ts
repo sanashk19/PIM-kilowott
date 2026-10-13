@@ -84,7 +84,7 @@ export class SyncController {
       const product = await SyncService.importProduct(wooId);
       res.json({
         success: true,
-        message: `Successfully imported WooCommerce product ${wooId} into PIM Sentinel.`,
+        message: `Successfully imported WooCommerce product ${wooId} into VERIDEX.`,
         data: product,
       });
     } catch (err: any) {
@@ -114,6 +114,39 @@ export class SyncController {
       data: logs,
       count: logs.length,
     });
+  }
+
+  public static async rollback(req: Request, res: Response): Promise<void> {
+    const logId = Number(req.params.logId);
+    if (isNaN(logId)) {
+      res.status(400).json({ success: false, message: 'Invalid sync log ID' });
+      return;
+    }
+
+    try {
+      const result = await SyncService.rollbackSync(logId);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message || 'Rollback failed' });
+    }
+  }
+
+  public static getPolicies(_req: Request, res: Response): void {
+    try {
+      const policies = PolicyService.getPolicies();
+      res.json({ success: true, data: policies });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
+  public static updatePolicies(req: Request, res: Response): void {
+    try {
+      const updated = PolicyService.updatePolicies(req.body);
+      res.json({ success: true, message: 'Source-of-truth policies updated', data: updated });
+    } catch (err: any) {
+      res.status(400).json({ success: false, message: err.message });
+    }
   }
 
   public static getMockStoreProducts(req: Request, res: Response): void {
