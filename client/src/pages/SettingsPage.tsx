@@ -2,17 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import {
-  Settings,
-  Server,
-  Zap,
   RotateCcw,
   CheckCircle2,
-  AlertTriangle,
-  Save,
-  Shield,
   Store,
+  Sliders,
+  ShieldCheck,
+  Check,
 } from 'lucide-react';
 import { TopBar } from '../components/TopBar';
+import type { SourceOfTruthPolicies } from '../types';
 
 export const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -25,12 +23,31 @@ export const SettingsPage: React.FC = () => {
     mock_woo_simulate_failure: false,
   });
 
+  const [policies, setPolicies] = useState<SourceOfTruthPolicies>({
+    name: 'PIM',
+    sku: 'PIM',
+    regular_price: 'PIM',
+    sale_price: 'PIM',
+    stock_quantity: 'WOOCOMMERCE',
+    description: 'PIM',
+    short_description: 'PIM',
+    categories: 'PIM',
+    attributes: 'PIM',
+    image_url: 'PIM',
+    brand: 'PIM',
+  });
+
   const [connectionTestResult, setConnectionTestResult] = useState<any>(null);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
-  const { data: settingsData, isLoading } = useQuery({
+  const { data: settingsData } = useQuery({
     queryKey: ['settings'],
     queryFn: () => api.getSettings(),
+  });
+
+  const { data: policiesData } = useQuery({
+    queryKey: ['policies'],
+    queryFn: () => api.getPolicies(),
   });
 
   useEffect(() => {
@@ -45,12 +62,22 @@ export const SettingsPage: React.FC = () => {
     }
   }, [settingsData]);
 
+  useEffect(() => {
+    if (policiesData?.data) {
+      setPolicies(policiesData.data);
+    }
+  }, [policiesData]);
+
   const saveMutation = useMutation({
-    mutationFn: (data: typeof formData) => api.updateSettings(data),
+    mutationFn: async () => {
+      await api.updateSettings(formData);
+      await api.updatePolicies(policies);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['policies'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      setSaveSuccessMsg('Settings updated successfully.');
+      setSaveSuccessMsg('Platform configuration and Source-of-Truth policies updated successfully.');
       setTimeout(() => setSaveSuccessMsg(null), 3000);
     },
   });
@@ -79,35 +106,106 @@ export const SettingsPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveMutation.mutate(formData);
+    saveMutation.mutate();
+  };
+
+  const handlePolicyChange = (field: keyof SourceOfTruthPolicies, owner: 'PIM' | 'WOOCOMMERCE') => {
+    setPolicies(prev => ({ ...prev, [field]: owner }));
   };
 
   return (
     <div className="flex-1 bg-white min-h-screen flex flex-col">
-      <TopBar breadcrumbs={['Integrations', 'Settings']} />
+      <TopBar breadcrumbs={['Integrations', 'Settings & Policies']} />
 
       <div className="p-6 max-w-4xl w-full mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-bold text-[#111916] tracking-tight">Platform Settings</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[#111916] tracking-tight">Platform Configuration</h1>
+            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-[#f4f2ec] text-[#5c6660] border border-[#e6e4df]">
+              VERIDEX Rules
+            </span>
+          </div>
           <p className="text-xs text-[#5c6660] mt-0.5">
-            Configure WooCommerce sync adapters, authentication credentials, and database sandbox.
+            Configure WooCommerce sync adapters, field ownership policies, and reconciliation rules.
           </p>
         </div>
 
         {saveSuccessMsg && (
-          <div className="p-3 bg-[#f0fdf4] border border-[#bbf7d0] text-[#15803d] text-xs rounded-md shadow-2xs">
-            {saveSuccessMsg}
+          <div className="p-3 bg-[#f0fdf4] border border-[#bbf7d0] text-[#15803d] text-xs rounded-md shadow-2xs flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{saveSuccessMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* SOURCE-OF-TRUTH POLICIES CARD */}
+          <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#f4f2ec]">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#15803d]" />
+                <h2 className="text-xs font-bold text-[#111916] uppercase tracking-wider">
+                  Source-of-Truth Field Policies
+                </h2>
+              </div>
+              <span className="text-[11px] text-[#7d8b82]">
+                Sync Inspector uses these to recommend conflict resolutions
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              {[
+                { key: 'regular_price', label: 'Retail Price', desc: 'Base currency pricing' },
+                { key: 'stock_quantity', label: 'Inventory Stock', desc: 'Warehouse unit counts' },
+                { key: 'name', label: 'Product Title', desc: 'Storefront item name' },
+                { key: 'description', label: 'Description', desc: 'Rich HTML copywriting' },
+                { key: 'categories', label: 'Categories', desc: 'Store taxonomy hierarchy' },
+                { key: 'attributes', label: 'Attributes', desc: 'Technical specifications' },
+              ].map(({ key, label, desc }) => (
+                <div
+                  key={key}
+                  className="p-3 rounded-lg border border-[#e6e4df] bg-[#fbfaf8] flex items-center justify-between gap-3"
+                >
+                  <div>
+                    <div className="font-bold text-[#111916]">{label}</div>
+                    <div className="text-[10.5px] text-[#7d8b82]">{desc}</div>
+                  </div>
+
+                  <div className="flex items-center rounded-md border border-[#e6e4df] bg-white p-0.5 shrink-0 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => handlePolicyChange(key as any, 'PIM')}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                        policies[key] === 'PIM'
+                          ? 'bg-[#15803d] text-white shadow-xs'
+                          : 'text-[#5c6660] hover:text-[#111916]'
+                      }`}
+                    >
+                      PIM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePolicyChange(key as any, 'WOOCOMMERCE')}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                        policies[key] === 'WOOCOMMERCE'
+                          ? 'bg-[#1d4ed8] text-white shadow-xs'
+                          : 'text-[#5c6660] hover:text-[#111916]'
+                      }`}
+                    >
+                      Woo
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* WooCommerce Connection Card */}
           <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#f4f2ec]">
               <Store className="w-4 h-4 text-[#15803d]" />
               <h2 className="text-xs font-bold text-[#111916] uppercase tracking-wider">
-                WooCommerce Integration
+                WooCommerce Adapter
               </h2>
             </div>
 
@@ -243,7 +341,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center justify-between text-xs">
               <p className="text-[#5c6660] max-w-lg leading-relaxed">
                 Restore the catalog to the canonical 10-product demo state with controlled conflict
-                profiles and mock storefront data.
+                profiles, baseline snapshots, and realistic attributes.
               </p>
 
               <button

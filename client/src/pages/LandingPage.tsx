@@ -26,17 +26,17 @@ export const LandingPage: React.FC = () => {
             </div>
             <div>
               <span className="font-bold text-base tracking-tight text-[#111916]">
-                PIM Sentinel
+                VERIDEX
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs text-[#7d8b82] font-medium px-2 py-0.5 rounded bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]">
-                Product Intelligence
+                Intelligent Product Catalog &amp; Sync
               </span>
             </div>
           </div>
 
           <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-[#5c6660]">
             <a href="#workflow" className="hover:text-[#19201d] transition-colors">
-              Workflow
+              Three-Way Sync
             </a>
             <a href="#features" className="hover:text-[#19201d] transition-colors">
               Platform Features
@@ -69,18 +69,19 @@ export const LandingPage: React.FC = () => {
 
       {/* Hero Section */}
       <section className="pt-20 pb-16 px-6 max-w-7xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] text-xs font-medium mb-6">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] text-xs font-semibold mb-6">
           <Sparkles className="w-3.5 h-3.5 text-[#15803d]" />
-          <span>Next-Generation Product Intelligence for B2B &amp; D2C Commerce</span>
+          <span>AI proposes. Rules verify. You stay in control.</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[#111916] max-w-4xl mx-auto leading-[1.12]">
-          Make every product <span className="text-[#15803d]">storefront-ready.</span>
+          VERIDEX <br className="hidden sm:inline" />
+          <span className="text-[#15803d]">Intelligent Product Catalog &amp; Sync Platform</span>
         </h1>
 
         <p className="mt-6 text-base sm:text-lg text-[#5c6660] max-w-2xl mx-auto leading-relaxed">
-          Intelligent product information management for WooCommerce — analyze, validate, resolve,
-          and synchronize with absolute confidence.
+          Keep your product catalog accurate across PIM and WooCommerce with AI-assisted enrichment,
+          deterministic validation, and conflict-aware three-way synchronization.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -88,7 +89,7 @@ export const LandingPage: React.FC = () => {
             to="/app/overview"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#15803d] hover:bg-[#166534] text-white text-sm font-semibold shadow-xs transition-all"
           >
-            <span>Get Started</span>
+            <span>Open Workspace</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
@@ -105,65 +106,65 @@ export const LandingPage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-[#f4f2ec]">
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-[#15803d]">
-                Continuous Intelligence Pipeline
+                Three-Way Synchronization Pipeline
               </div>
               <div className="text-sm font-semibold text-[#111916] mt-0.5">
-                From raw vendor feeds to high-converting WooCommerce listings
+                Baseline Snapshot ➔ PIM Intelligence ➔ Deterministic Guardrails ➔ WooCommerce Live
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs font-medium text-[#7d8b82]">
               <span className="w-2 h-2 rounded-full bg-[#15803d]" />
-              Automated Sentinel Engine Active
+              VERIDEX Guardrail Engine Active
             </div>
           </div>
 
           {/* Stepper Pipeline */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
             {/* Step 1 */}
-            <div className="p-4 rounded-lg bg-[#fbfaf8] border border-[#e6e4df]">
+            <div className="p-4 rounded-lg bg-slate-50 border border-[#e6e4df]">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-bold text-[#8a948e]">01</span>
                 <Database className="w-4 h-4 text-[#5c6660]" />
               </div>
-              <div className="font-semibold text-xs text-[#111916]">Product Catalog</div>
+              <div className="font-semibold text-xs text-[#111916]">PIM Master</div>
               <p className="text-[11px] text-[#5c6660] mt-1 leading-snug">
-                Centralized master SKU repository with granular taxonomy.
+                Canonical product catalog repository with full specification matrices.
               </p>
             </div>
 
             {/* Step 2 */}
-            <div className="p-4 rounded-lg bg-[#fbfaf8] border border-[#e6e4df]">
+            <div className="p-4 rounded-lg bg-slate-50 border border-[#e6e4df]">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-bold text-[#8a948e]">02</span>
                 <Sparkles className="w-4 h-4 text-[#7c3aed]" />
               </div>
-              <div className="font-semibold text-xs text-[#111916]">AI Review</div>
+              <div className="font-semibold text-xs text-[#111916]">AI Analysis</div>
               <p className="text-[11px] text-[#5c6660] mt-1 leading-snug">
-                Heuristic &amp; LLM quality checks for descriptions and specs.
+                Autonomous heuristic &amp; LLM agents propose fixes for descriptions &amp; attributes.
               </p>
             </div>
 
             {/* Step 3 */}
-            <div className="p-4 rounded-lg bg-[#fbfaf8] border border-[#e6e4df]">
+            <div className="p-4 rounded-lg bg-slate-50 border border-[#e6e4df]">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-bold text-[#8a948e]">03</span>
                 <CheckCircle2 className="w-4 h-4 text-[#15803d]" />
               </div>
-              <div className="font-semibold text-xs text-[#111916]">Quality Validation</div>
+              <div className="font-semibold text-xs text-[#111916]">Rules Verify</div>
               <p className="text-[11px] text-[#5c6660] mt-1 leading-snug">
-                Detect missing attributes, price inverted bugs, and SEO gaps.
+                Deterministic guardrails block large price spikes (&gt;30%) and missing SKUs.
               </p>
             </div>
 
             {/* Step 4 */}
-            <div className="p-4 rounded-lg bg-[#fbfaf8] border border-[#e6e4df]">
+            <div className="p-4 rounded-lg bg-slate-50 border border-[#e6e4df]">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[11px] font-bold text-[#8a948e]">04</span>
                 <GitCompare className="w-4 h-4 text-[#b45309]" />
               </div>
-              <div className="font-semibold text-xs text-[#111916]">Sync Inspector</div>
+              <div className="font-semibold text-xs text-[#111916]">Human Approval</div>
               <p className="text-[11px] text-[#5c6660] mt-1 leading-snug">
-                Dry-run diff engine compares local data with WooCommerce.
+                Three-way diff &amp; source-of-truth policies guide user approval with blast-radius score.
               </p>
             </div>
 
@@ -173,9 +174,9 @@ export const LandingPage: React.FC = () => {
                 <span className="text-[11px] font-bold text-[#15803d]">05</span>
                 <Store className="w-4 h-4 text-[#15803d]" />
               </div>
-              <div className="font-semibold text-xs text-[#166534]">WooCommerce Store</div>
+              <div className="font-semibold text-xs text-[#166534]">WooCommerce Sync</div>
               <p className="text-[11px] text-[#166534] mt-1 leading-snug">
-                Safe, audited publishing with conflict resolution.
+                Atomic synchronization, immutable audit ledger, and 1-click rollback.
               </p>
             </div>
           </div>
@@ -184,7 +185,7 @@ export const LandingPage: React.FC = () => {
           <div className="mt-6 p-4 rounded-lg bg-slate-50 border border-[#e6e4df] flex flex-col sm:flex-row items-center gap-4">
             <img
               src="/assets/robot-assistant.png"
-              alt="PIM Sentinel AI Assistant"
+              alt="VERIDEX AI Assistant"
               className="w-16 h-16 object-contain shrink-0 drop-shadow-sm"
             />
             <div className="flex-1 text-xs">
@@ -366,7 +367,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="py-6 px-6 border-t border-[#e6e4df] text-center text-xs text-[#7d8b82]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>PIM Sentinel · Product Intelligence Platform</div>
+          <div>VERIDEX · Intelligent Product Catalog &amp; Sync Platform</div>
           <div>React · TypeScript · Vite · Node.js · Express</div>
         </div>
       </footer>

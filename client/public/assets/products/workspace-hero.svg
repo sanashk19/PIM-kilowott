@@ -34,7 +34,7 @@
   <!-- Screen UI Mockup -->
   <rect x="205" y="115" width="115" height="65" rx="4" fill="#166534" opacity="0.85" />
   <path d="M220 135L245 155L295 125" stroke="#86EFAC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-  <text x="262" y="170" font-family="-apple-system, sans-serif" font-size="8" font-weight="bold" fill="#F0FDF4" text-anchor="middle">PIM SENTINEL · LIVE</text>
+  <text x="262" y="170" font-family="-apple-system, sans-serif" font-size="8" font-weight="bold" fill="#F0FDF4" text-anchor="middle">VERIDEX · LIVE</text>
   
   <!-- Laptop Keyboard Base (Perspective) -->
   <path d="M180 215L350 205L410 245L220 260Z" fill="url(#laptopGrad)" stroke="#64748B" stroke-width="1.5" />

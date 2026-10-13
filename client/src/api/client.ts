@@ -1,7 +1,8 @@
 import type {
   Category, Attribute, Product, PreFlightDiffResponse,
   SyncLog, DashboardStats, MockStoreProduct,
-  AgentPlanResult, CatalogAuditResult,
+  AgentPlanResult, CatalogAuditResult, SourceOfTruthPolicies,
+  SyncChangeset,
 } from '../types';
 
 const BASE_URL = '/api/v1';
@@ -51,7 +52,7 @@ export const api = {
     request<{ success: boolean; data: Attribute }>(`/attributes/${id}/options`, { method: 'POST', body: JSON.stringify(payload) }),
   deleteAttribute: (id: number) => request<{ success: boolean }>(`/attributes/${id}`, { method: 'DELETE' }),
 
-  // Sync
+  // Sync & Three-Way Reconcile
   getPreFlightDiff: (productId: number) => request<{ success: boolean; data: PreFlightDiffResponse }>(`/sync/diff/${productId}`),
   pushProduct: (productId: number) => request<{ success: boolean; message: string; woo_id: number; product: Product }>(`/sync/push/${productId}`, { method: 'POST' }),
   pushBatch: (productIds: number[]) => request<{ success: boolean; data: any }>('/sync/push-batch', { method: 'POST', body: JSON.stringify({ product_ids: productIds }) }),
@@ -65,17 +66,29 @@ export const api = {
     if (params.direction && params.direction !== 'all') q.set('direction', params.direction);
     return request<{ success: boolean; data: SyncLog[] }>(`/sync/logs?${q.toString()}`);
   },
+  rollbackSync: (logId: number) =>
+    request<{ success: boolean; message: string; product: Product }>(`/sync/rollback/${logId}`, { method: 'POST' }),
+  getPolicies: () => request<{ success: boolean; data: SourceOfTruthPolicies }>('/sync/policies'),
+  updatePolicies: (payload: Partial<SourceOfTruthPolicies>) =>
+    request<{ success: boolean; message: string; data: SourceOfTruthPolicies }>('/sync/policies', { method: 'PUT', body: JSON.stringify(payload) }),
   getMockStoreProducts: (search?: string) => {
     const q = search ? `?search=${encodeURIComponent(search)}` : '';
     return request<{ success: boolean; data: MockStoreProduct[]; count: number }>(`/sync/mock-store-products${q}`);
   },
 
-  // AI
+  // AI & Guardrails
   analyzeProduct: (productId: number) => request<{ success: boolean; data: any }>(`/ai/analyze-product/${productId}`, { method: 'POST' }),
   agentPlan: (productId: number) => request<{ success: boolean; data: AgentPlanResult }>(`/ai/agent/plan/${productId}`, { method: 'POST' }),
   agentExecute: (runId: number, decision: 'approved' | 'rejected', fieldOverrides?: any) =>
     request<{ success: boolean; data: any }>(`/ai/agent/execute/${runId}`, { method: 'POST', body: JSON.stringify({ decision, fieldOverrides }) }),
   auditCatalog: () => request<{ success: boolean; data: CatalogAuditResult }>('/ai/audit-catalog', { method: 'POST' }),
+  bulkAction: (prompt: string) =>
+    request<{ success: boolean; data: SyncChangeset }>('/ai/bulk-action', { method: 'POST', body: JSON.stringify({ prompt }) }),
+  applyChangeset: (changesetId: string, approvedProductIds?: number[]) =>
+    request<{ success: boolean; appliedCount: number; message: string }>('/ai/apply-changeset', {
+      method: 'POST',
+      body: JSON.stringify({ changesetId, approvedProductIds }),
+    }),
 
   // Settings
   getSettings: () => request<{ success: boolean; data: any }>('/settings'),

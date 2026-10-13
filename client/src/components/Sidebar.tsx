@@ -85,10 +85,10 @@ export const Sidebar: React.FC = () => {
           {!isCollapsed && (
             <div className="min-w-0">
               <div className="font-semibold text-[13px] tracking-tight text-white leading-tight truncate">
-                PIM Sentinel
+                VERIDEX
               </div>
               <div className="text-[10px] text-[#7d8b82] font-medium truncate">
-                Product Intelligence
+                Intelligent Catalog &amp; Sync
               </div>
             </div>
           )}

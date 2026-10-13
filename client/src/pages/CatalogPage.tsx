@@ -22,6 +22,7 @@ import {
 import { TopBar } from '../components/TopBar';
 import { PreFlightDiffModal } from '../components/PreFlightDiffModal';
 import { ProductEditorModal } from '../components/ProductEditorModal';
+import { AIBulkActionModal } from '../components/AIBulkActionModal';
 import type { Product } from '../types';
 
 export const CatalogPage: React.FC = () => {
@@ -37,6 +38,7 @@ export const CatalogPage: React.FC = () => {
   const [inspectProductId, setInspectProductId] = useState<number | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isBulkActionOpen, setIsBulkActionOpen] = useState(false);
   const [actionMenuOpenId, setActionMenuOpenId] = useState<number | null>(null);
 
   const { data: productsData, isLoading } = useQuery({
@@ -176,6 +178,15 @@ export const CatalogPage: React.FC = () => {
             >
               <Download className="w-3.5 h-3.5 text-[#5c6660]" />
               <span>Export</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsBulkActionOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f3ff] hover:bg-[#ede9fe] text-[#7c3aed] border border-[#ddd6fe] rounded-md text-xs font-semibold transition-colors shadow-2xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#7c3aed]" />
+              <span>AI Bulk Actions</span>
             </button>
 
             <button
@@ -510,6 +521,12 @@ export const CatalogPage: React.FC = () => {
           onClose={() => setInspectProductId(null)}
         />
       )}
+
+      {/* AI Bulk Action Modal */}
+      <AIBulkActionModal
+        isOpen={isBulkActionOpen}
+        onClose={() => setIsBulkActionOpen(false)}
+      />
     </div>
   );
 };

@@ -40,6 +40,7 @@ export interface QualityIssue {
   severity: 'critical' | 'medium' | 'low';
   message: string;
   recommendation: string;
+  deduction?: number;
 }
 
 export interface QualityCheck {
@@ -48,6 +49,7 @@ export interface QualityCheck {
   passed: boolean;
   deduction: number;
   detail: string;
+  suggested_fix?: string;
 }
 
 export interface QualityAssessment {
@@ -81,6 +83,7 @@ export interface Product {
   quality_score: number;
   quality_issues?: QualityIssue[];
   quality_assessment?: QualityAssessment;
+  baseline_snapshot?: Record<string, any> | null;
   last_synced_at?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -88,15 +91,35 @@ export interface Product {
   product_attributes?: ProductAttributeItem[];
 }
 
+export type ThreeWayStatus = 'MATCH' | 'PIM_CHANGED' | 'WOO_CHANGED' | 'CONFLICT' | 'NEW';
+
 export interface DiffItem {
   field: string;
   label?: string;
   field_label?: string;
+  baseline_value?: string;
   pim_value: any;
   woo_value: any;
   is_different: boolean;
   diff_type: 'new' | 'modified' | 'unchanged' | 'conflict';
+  three_way_status?: ThreeWayStatus;
+  policy_owner?: 'PIM' | 'WOOCOMMERCE';
+  recommended_resolution?: 'keep_pim' | 'keep_woo' | 'manual';
+  resolution_reason?: string;
   status?: 'match' | 'changed' | 'conflict';
+}
+
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface BlastRadiusImpact {
+  risk_level: RiskLevel;
+  risk_reason: string;
+  affected_products_count: number;
+  price_changes_count: number;
+  stock_changes_count: number;
+  category_changes_count: number;
+  conflicts_count: number;
+  recommended_action: string;
 }
 
 export interface PreFlightDiffResponse {
@@ -111,8 +134,11 @@ export interface PreFlightDiffResponse {
   validation_errors: string[];
   validation_warnings: string[];
   diffs: DiffItem[];
+  blast_radius?: BlastRadiusImpact;
+  recommended_action?: 'keep_pim' | 'keep_woo' | 'manual';
   payload_preview: Record<string, unknown>;
   remote_state?: Record<string, unknown> | null;
+  baseline_snapshot?: Record<string, unknown> | null;
 }
 
 export interface SyncLog {
@@ -121,14 +147,31 @@ export interface SyncLog {
   product_name?: string | null;
   product?: { name: string; sku?: string } | null;
   entity_type: string;
-  direction: 'pim_to_woo' | 'woo_to_pim';
+  direction: 'pim_to_woo' | 'woo_to_pim' | 'rollback';
   action: string;
   status: 'success' | 'failed' | 'warning';
   changed_fields?: string[];
   request_payload?: Record<string, unknown> | null;
   response_payload?: Record<string, unknown> | null;
+  previous_snapshot?: Record<string, unknown> | null;
+  changeset_id?: string | null;
   error_message?: string | null;
   created_at: string;
+}
+
+export interface SourceOfTruthPolicies {
+  name: 'PIM' | 'WOOCOMMERCE';
+  sku: 'PIM' | 'WOOCOMMERCE';
+  regular_price: 'PIM' | 'WOOCOMMERCE';
+  sale_price: 'PIM' | 'WOOCOMMERCE';
+  stock_quantity: 'PIM' | 'WOOCOMMERCE';
+  description: 'PIM' | 'WOOCOMMERCE';
+  short_description: 'PIM' | 'WOOCOMMERCE';
+  categories: 'PIM' | 'WOOCOMMERCE';
+  attributes: 'PIM' | 'WOOCOMMERCE';
+  image_url: 'PIM' | 'WOOCOMMERCE';
+  brand: 'PIM' | 'WOOCOMMERCE';
+  [key: string]: 'PIM' | 'WOOCOMMERCE';
 }
 
 export interface DashboardStats {
@@ -171,11 +214,33 @@ export interface MockStoreProduct {
 
 export interface AgentStepTrace {
   step: number;
+  code?: string;
+  name?: string;
   tool: string;
   description: string;
-  status: 'completed' | 'failed' | 'waiting_for_approval';
+  status: 'completed' | 'warning' | 'blocked' | 'waiting_for_approval';
   details?: any;
   timestamp: string;
+  durationMs?: number;
+}
+
+export interface GuardrailValidation {
+  rule: string;
+  name: string;
+  passed: boolean;
+  blocked: boolean;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  field: string;
+  reason: string;
+  suggested_action?: string;
+}
+
+export interface GuardrailReport {
+  valid: boolean;
+  blockedCount: number;
+  warningCount: number;
+  passedCount: number;
+  rules: GuardrailValidation[];
 }
 
 export interface AgentProposedChange {
@@ -183,6 +248,7 @@ export interface AgentProposedChange {
   before: any;
   after: any;
   rationale: string;
+  guardrail?: GuardrailValidation;
 }
 
 export interface AgentPlanResult {
@@ -197,12 +263,41 @@ export interface AgentPlanResult {
   proposedChanges: AgentProposedChange[];
   recommendations?: Array<{ field: string; reason: string }>;
   syncPlan: any;
+  guardrailReport?: GuardrailReport;
   steps: AgentStepTrace[];
   aiProviderInfo: {
     provider: string;
     model: string;
     isFallback: boolean;
   };
+}
+
+export interface ChangesetFieldChange {
+  productId: number;
+  productName: string;
+  field: string;
+  previousValue: any;
+  newValue: any;
+  source: 'PIM' | 'WOOCOMMERCE' | 'AI';
+  approved: boolean;
+}
+
+export interface SyncChangeset {
+  id: string;
+  createdAt: string;
+  source: string;
+  target: string;
+  products: number[];
+  fieldChanges: ChangesetFieldChange[];
+  validationResults: {
+    valid: boolean;
+    errors: string[];
+    warnings: string[];
+  };
+  riskLevel: RiskLevel;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  executionStatus: string;
+  appliedAt?: string;
 }
 
 export interface CatalogAuditResult {
