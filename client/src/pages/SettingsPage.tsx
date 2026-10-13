@@ -8,11 +8,11 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertTriangle,
-  Loader2,
   Save,
   Shield,
+  Store,
 } from 'lucide-react';
-import { HeaderBar } from '../components/HeaderBar';
+import { TopBar } from '../components/TopBar';
 
 export const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -58,25 +58,22 @@ export const SettingsPage: React.FC = () => {
   const testConnectionMutation = useMutation({
     mutationFn: () => api.testConnection(),
     onSuccess: (res) => {
-      setConnectionTestResult({
-        success: true,
-        message: res.data?.message || 'Connection verified successfully.',
-      });
+      setConnectionTestResult(res);
     },
     onError: (err: any) => {
       setConnectionTestResult({
-        success: false,
-        message: err.message || 'Connection test failed.',
+        connected: false,
+        message: err.message || 'Connection test failed',
       });
     },
   });
 
-  const resetMockStoreMutation = useMutation({
+  const resetMutation = useMutation({
     mutationFn: () => api.resetMockStore(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mock-store-products'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      alert('Mock store database reset to original 5 baseline products.');
+      queryClient.invalidateQueries();
+      setSaveSuccessMsg('Catalog restored to default enterprise demo state.');
+      setTimeout(() => setSaveSuccessMsg(null), 3000);
     },
   });
 
@@ -86,139 +83,145 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
-      <HeaderBar />
+    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+      <TopBar breadcrumbs={['Integrations', 'Settings']} />
 
-      <div className="p-6 sm:p-8 space-y-6 max-w-4xl w-full mx-auto">
+      <div className="p-6 max-w-4xl w-full mx-auto space-y-6">
+        {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Configure WooCommerce driver mode, API credentials, and mock environment sandbox flags.
+          <h1 className="text-xl font-bold text-[#111916] tracking-tight">Platform Settings</h1>
+          <p className="text-xs text-[#5c6660] mt-0.5">
+            Configure WooCommerce sync adapters, authentication credentials, and database sandbox.
           </p>
         </div>
 
         {saveSuccessMsg && (
-          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>{saveSuccessMsg}</span>
+          <div className="p-3 bg-[#f0fdf4] border border-[#bbf7d0] text-[#15803d] text-xs rounded-md shadow-2xs">
+            {saveSuccessMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Driver Mode Section */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Server className="w-4 h-4 text-violet-600" />
-              WooCommerce Integration Driver
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label
-                className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
-                  formData.woo_active_driver === 'mock'
-                    ? 'border-violet-600 bg-violet-50/50 ring-2 ring-violet-500/10'
-                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-900">In-Memory Mock Store</span>
-                  <input
-                    type="radio"
-                    name="driver"
-                    value="mock"
-                    checked={formData.woo_active_driver === 'mock'}
-                    onChange={() => setFormData({ ...formData, woo_active_driver: 'mock' })}
-                    className="text-violet-600 focus:ring-violet-500"
-                  />
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Hermetic local simulation. Zero external dependencies. Ideal for testing edge-cases and hackathon grading.
-                </p>
-              </label>
-
-              <label
-                className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
-                  formData.woo_active_driver === 'live'
-                    ? 'border-violet-600 bg-violet-50/50 ring-2 ring-violet-500/10'
-                    : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-900">Live WordPress / WooCommerce</span>
-                  <input
-                    type="radio"
-                    name="driver"
-                    value="live"
-                    checked={formData.woo_active_driver === 'live'}
-                    onChange={() => setFormData({ ...formData, woo_active_driver: 'live' })}
-                    className="text-violet-600 focus:ring-violet-500"
-                  />
-                </div>
-                <p className="text-[11px] text-slate-500">
-                  Connects to a real production WordPress instance via official WooCommerce REST API v3 over HTTPS.
-                </p>
-              </label>
+          {/* WooCommerce Connection Card */}
+          <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#f4f2ec]">
+              <Store className="w-4 h-4 text-[#15803d]" />
+              <h2 className="text-xs font-bold text-[#111916] uppercase tracking-wider">
+                WooCommerce Integration
+              </h2>
             </div>
-          </div>
-
-          {/* Credentials Section */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-violet-600" />
-              API Credentials
-            </h2>
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Store URL</label>
+                <label className="block font-semibold text-[#111916] mb-1.5">Active Driver</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label
+                    className={`flex items-start gap-2.5 p-3 rounded-md border cursor-pointer ${
+                      formData.woo_active_driver === 'mock'
+                        ? 'bg-[#f0fdf4] border-[#15803d]'
+                        : 'border-[#e6e4df] hover:bg-[#fbfaf8]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="driver"
+                      value="mock"
+                      checked={formData.woo_active_driver === 'mock'}
+                      onChange={() =>
+                        setFormData((prev) => ({ ...prev, woo_active_driver: 'mock' }))
+                      }
+                      className="mt-0.5 text-[#15803d]"
+                    />
+                    <div>
+                      <div className="font-semibold text-[#111916]">Internal Mock Store</div>
+                      <div className="text-[11px] text-[#5c6660]">
+                        Safe sandbox simulation with zero external API dependencies.
+                      </div>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-start gap-2.5 p-3 rounded-md border cursor-pointer ${
+                      formData.woo_active_driver === 'real'
+                        ? 'bg-[#f0fdf4] border-[#15803d]'
+                        : 'border-[#e6e4df] hover:bg-[#fbfaf8]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="driver"
+                      value="real"
+                      checked={formData.woo_active_driver === 'real'}
+                      onChange={() =>
+                        setFormData((prev) => ({ ...prev, woo_active_driver: 'real' }))
+                      }
+                      className="mt-0.5 text-[#15803d]"
+                    />
+                    <div>
+                      <div className="font-semibold text-[#111916]">Live REST API</div>
+                      <div className="text-[11px] text-[#5c6660]">
+                        Connect directly to a live WooCommerce v3 installation.
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#111916] mb-1">Store URL</label>
                 <input
-                  type="text"
-                  placeholder="https://example.com"
+                  type="url"
                   value={formData.woo_store_url}
-                  onChange={(e) => setFormData({ ...formData, woo_store_url: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, woo_store_url: e.target.value }))
+                  }
+                  placeholder="https://your-store.com"
+                  className="w-full px-3 py-1.5 border border-[#e6e4df] rounded-md text-xs focus:ring-1 focus:ring-[#15803d]"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Consumer Key (ck_...)</label>
+                  <label className="block font-semibold text-[#111916] mb-1">Consumer Key</label>
                   <input
                     type="text"
-                    placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxx"
                     value={formData.woo_consumer_key}
-                    onChange={(e) => setFormData({ ...formData, woo_consumer_key: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, woo_consumer_key: e.target.value }))
+                    }
+                    placeholder="ck_..."
+                    className="w-full px-3 py-1.5 border border-[#e6e4df] rounded-md text-xs font-mono focus:ring-1 focus:ring-[#15803d]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Consumer Secret (cs_...)</label>
+                  <label className="block font-semibold text-[#111916] mb-1">Consumer Secret</label>
                   <input
                     type="password"
-                    placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxx"
                     value={formData.woo_consumer_secret}
-                    onChange={(e) => setFormData({ ...formData, woo_consumer_secret: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, woo_consumer_secret: e.target.value }))
+                    }
+                    placeholder="cs_..."
+                    className="w-full px-3 py-1.5 border border-[#e6e4df] rounded-md text-xs font-mono focus:ring-1 focus:ring-[#15803d]"
                   />
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center gap-3">
+              <div className="pt-2 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => testConnectionMutation.mutate()}
                   disabled={testConnectionMutation.isPending}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-2"
+                  className="px-3 py-1.5 bg-white hover:bg-[#f4f2ec] border border-[#e6e4df] rounded-md text-xs font-semibold text-[#19201d] shadow-2xs"
                 >
-                  {testConnectionMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-violet-600" />}
-                  Test Driver Connection
+                  {testConnectionMutation.isPending ? 'Testing...' : 'Test Connection'}
                 </button>
 
                 {connectionTestResult && (
                   <span
                     className={`text-xs font-semibold ${
-                      connectionTestResult.success ? 'text-emerald-600' : 'text-rose-600'
+                      connectionTestResult.connected ? 'text-[#15803d]' : 'text-[#dc2626]'
                     }`}
                   >
                     {connectionTestResult.message}
@@ -228,39 +231,32 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Sandbox & Failure Simulation */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-violet-600" />
-              Sandbox Chaos Testing
-            </h2>
-
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div>
-                <div className="text-xs font-bold text-slate-800">Simulate WooCommerce Upstream Failure</div>
-                <div className="text-[11px] text-slate-500">
-                  Injects artificial HTTP 500 error on sync push to verify audit logging and UI error recovery.
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={formData.mock_woo_simulate_failure}
-                onChange={(e) =>
-                  setFormData({ ...formData, mock_woo_simulate_failure: e.target.checked })
-                }
-                className="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-              />
+          {/* Reset Sandbox Card */}
+          <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
+            <div className="flex items-center gap-2 pb-2 border-b border-[#f4f2ec]">
+              <RotateCcw className="w-4 h-4 text-[#b45309]" />
+              <h2 className="text-xs font-bold text-[#111916] uppercase tracking-wider">
+                Reset Demo Sandbox
+              </h2>
             </div>
 
-            <div className="pt-2">
+            <div className="flex items-center justify-between text-xs">
+              <p className="text-[#5c6660] max-w-lg leading-relaxed">
+                Restore the catalog to the canonical 10-product demo state with controlled conflict
+                profiles and mock storefront data.
+              </p>
+
               <button
                 type="button"
-                onClick={() => resetMockStoreMutation.mutate()}
-                disabled={resetMockStoreMutation.isPending}
-                className="text-xs font-semibold text-rose-600 hover:text-rose-800 flex items-center gap-1.5"
+                onClick={() => {
+                  if (confirm('Reset entire catalog to default demo state?')) {
+                    resetMutation.mutate();
+                  }
+                }}
+                disabled={resetMutation.isPending}
+                className="px-3 py-1.5 border border-[#e6e4df] bg-white hover:bg-[#fef2f2] text-[#dc2626] font-semibold rounded-md shadow-2xs shrink-0"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset Mock Store to Baseline Seed
+                Reset Catalog
               </button>
             </div>
           </div>
@@ -269,9 +265,8 @@ export const SettingsPage: React.FC = () => {
             <button
               type="submit"
               disabled={saveMutation.isPending}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/20 active:scale-95 transition-all"
+              className="px-5 py-2 bg-[#15803d] hover:bg-[#166534] text-white rounded-md text-xs font-semibold shadow-2xs transition-colors"
             >
-              {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               Save Configuration
             </button>
           </div>

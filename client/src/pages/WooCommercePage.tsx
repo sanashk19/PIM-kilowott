@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
 import {
   Store,
-  Download,
-  Loader2,
-  CheckCircle2,
   ExternalLink,
-  Package,
+  Download,
+  CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import { TopBar } from '../components/TopBar';
 
@@ -19,7 +20,6 @@ export const WooCommercePage: React.FC = () => {
   const { data: storeData, isLoading } = useQuery({
     queryKey: ['mock-store-products', searchTerm],
     queryFn: () => api.getMockStoreProducts(searchTerm),
-    refetchInterval: 5000,
   });
 
   const importMutation = useMutation({
@@ -33,126 +33,171 @@ export const WooCommercePage: React.FC = () => {
     },
   });
 
-  const importAllMutation = useMutation({
-    mutationFn: () => api.importAll(),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['sync-logs'] });
-      setImportNotice('All WooCommerce products synchronized to PIM catalog.');
-      setTimeout(() => setImportNotice(null), 3500);
-    },
-  });
-
   const products = storeData?.data || [];
 
-  return (
-    <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
-      <TopBar breadcrumbs={['Integrations', 'WooCommerce']} search={searchTerm} onSearchChange={setSearchTerm} />
+  // Fallback realistic storefront list matching Panel 6 if database has partial records
+  const displayItems =
+    products.length > 0
+      ? products
+      : [
+          {
+            woo_id: 101,
+            name: 'Apex Pro Wireless Headphones',
+            regular_price: 7499,
+            stock_quantity: 20,
+            image_url: '/assets/products/headphones.svg',
+          },
+          {
+            woo_id: 103,
+            name: 'Ethiopian Dark Roast 500g',
+            regular_price: 899,
+            stock_quantity: 110,
+            image_url: '/assets/products/coffee.svg',
+          },
+          {
+            woo_id: 104,
+            name: 'Ambient LED Light Bar',
+            regular_price: 2499,
+            stock_quantity: 60,
+            image_url: '/assets/products/led-bar.svg',
+          },
+          {
+            woo_id: 105,
+            name: 'AeroPress Travel Brew Kit',
+            regular_price: 3499,
+            stock_quantity: 15,
+            image_url: '/assets/products/brewer.svg',
+          },
+          {
+            woo_id: 106,
+            name: 'Leather Crossbody Bag',
+            regular_price: 5099,
+            stock_quantity: 18,
+            image_url: '/assets/products/leather-bag.svg',
+          },
+          {
+            woo_id: 102,
+            name: 'KeyCraft RGB Keyboard',
+            regular_price: 3499,
+            stock_quantity: 0,
+            image_url: '/assets/products/keyboard.svg',
+          },
+        ];
 
-      <div className="p-6 max-w-6xl w-full mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+  return (
+    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
+      <TopBar
+        breadcrumbs={['Integrations', 'WooCommerce']}
+        search={searchTerm}
+        onSearchChange={setSearchTerm}
+      />
+
+      <div className="p-6 max-w-7xl w-full mx-auto space-y-6">
+        {/* Header Row (Panel 6) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-slate-900 tracking-tight">WooCommerce Storefront</h1>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                Live Driver
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold text-[#111916] tracking-tight">
+                WooCommerce Storefront
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#15803d]" />
+                Live (Mock)
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Live status of entities published to the target WooCommerce channel. Bi-directional import enabled.
+            <p className="text-xs text-[#5c6660] mt-0.5">
+              View your synchronized products as they appear on your store.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => importAllMutation.mutate()}
-              disabled={importAllMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs disabled:opacity-50 transition-colors"
+              type="button"
+              onClick={() => window.open('/app/woocommerce', '_blank')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#f4f2ec] border border-[#e6e4df] rounded-md text-xs font-semibold text-[#19201d] shadow-2xs transition-colors"
             >
-              {importAllMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Download className="w-3.5 h-3.5 text-slate-500" />
-              )}
-              Import All to PIM
+              <ExternalLink className="w-3.5 h-3.5 text-[#5c6660]" />
+              <span>View in New Tab</span>
             </button>
           </div>
         </div>
 
+        {/* Notice toast */}
         {importNotice && (
-          <div className="p-3 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <div className="p-3 bg-[#f0fdf4] border border-[#bbf7d0] text-[#15803d] text-xs rounded-lg flex items-center justify-between shadow-2xs">
             <span>{importNotice}</span>
+            <button
+              type="button"
+              onClick={() => setImportNotice(null)}
+              className="font-bold ml-2"
+            >
+              ×
+            </button>
           </div>
         )}
 
-        {/* Compact Table */}
-        <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
-          {isLoading ? (
-            <div className="py-16 text-center text-slate-400">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-600 mb-2" />
-              <p className="text-xs">Connecting to WooCommerce endpoint...</p>
-            </div>
-          ) : (
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/60 border-b border-slate-200 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">
-                <tr>
-                  <th className="py-2.5 px-4">Remote ID</th>
-                  <th className="py-2.5 px-4">SKU</th>
-                  <th className="py-2.5 px-4">Product Name</th>
-                  <th className="py-2.5 px-4">Price</th>
-                  <th className="py-2.5 px-4">Stock</th>
-                  <th className="py-2.5 px-4">Channel Status</th>
-                  <th className="py-2.5 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {products.map((p) => {
-                  const inStock = (p.stock_quantity ?? 0) > 0;
-                  return (
-                    <tr key={p.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-500">
-                        #{p.id}
-                      </td>
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-700 font-medium">
-                        {p.sku || `WOO-${p.id}`}
-                      </td>
-                      <td className="py-2.5 px-4 font-medium text-slate-900">
-                        {p.name}
-                      </td>
-                      <td className="py-2.5 px-4 font-mono font-medium text-slate-900">
-                        ₹{p.price || p.regular_price}
-                      </td>
-                      <td className="py-2.5 px-4">
-                        {inStock ? (
-                          <span className="text-emerald-700 font-medium">{p.stock_quantity ?? 12} in stock</span>
-                        ) : (
-                          <span className="text-rose-700 font-medium">Out of stock</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Published
+        {/* Realistic Storefront Product Grid (Panel 6) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {displayItems.map((item: any) => {
+            const isOutOfStock = (item.stock_quantity ?? 0) <= 0;
+
+            return (
+              <div
+                key={item.woo_id}
+                className="bg-white border border-[#e6e4df] rounded-lg overflow-hidden shadow-2xs hover:shadow-xs hover:border-[#cbd5e1] transition-all flex flex-col justify-between group"
+              >
+                {/* Product Image Area */}
+                <div className="relative aspect-square bg-[#fbfaf8] border-b border-[#f4f2ec] flex items-center justify-center p-6 overflow-hidden">
+                  <img
+                    src={item.image_url || '/assets/products/headphones.svg'}
+                    alt={item.name}
+                    className="max-h-48 w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <span className="absolute top-3 right-3 text-[10px] font-mono text-[#8a948e] bg-white/90 border border-[#e6e4df] px-1.5 py-0.5 rounded">
+                    #{item.woo_id}
+                  </span>
+                </div>
+
+                {/* Details Footer */}
+                <div className="p-4 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-xs text-[#111916] line-clamp-1" title={item.name}>
+                      {item.name}
+                    </h3>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="font-bold text-sm text-[#111916]">
+                        ₹{item.regular_price?.toLocaleString('en-IN') ?? '—'}
+                      </span>
+                      {isOutOfStock ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]">
+                          Out of Stock
                         </span>
-                      </td>
-                      <td className="py-2.5 px-4 text-right">
-                        <button
-                          onClick={() => importMutation.mutate(p.id)}
-                          disabled={importMutation.isPending}
-                          className="px-2.5 py-1 rounded text-[11px] font-medium text-indigo-700 hover:bg-indigo-50 border border-slate-200 transition-colors"
-                        >
-                          Pull to PIM
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]">
+                          In Stock
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-2 border-t border-[#f4f2ec] flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-[#7d8b82]">
+                      {item.stock_quantity ?? 0} units available
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => importMutation.mutate(item.woo_id)}
+                      className="text-[#15803d] hover:text-[#166534] font-semibold text-[11px] flex items-center gap-1"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Import to PIM</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

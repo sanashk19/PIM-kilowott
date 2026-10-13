@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300" fill="none">
+  <!-- Clean studio background -->
+  <rect width="300" height="300" rx="16" fill="#F4F4F3" />
+  
+  <defs>
+    <radialGradient id="hpShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="bandGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#222628" />
+      <stop offset="100%" stop-color="#0C0E10" />
+    </linearGradient>
+    <linearGradient id="cupGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2D3339" />
+      <stop offset="60%" stop-color="#181B1E" />
+      <stop offset="100%" stop-color="#0E1012" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ground contact shadow -->
+  <ellipse cx="150" cy="255" rx="90" ry="14" fill="url(#hpShadow)" />
+
+  <!-- Headband Arc -->
+  <path d="M78 160C78 90 108 55 150 55C192 55 222 90 222 160" stroke="url(#bandGrad)" stroke-width="18" stroke-linecap="round" />
+  <!-- Headband cushion inner curve -->
+  <path d="M96 145C96 95 118 70 150 70C182 70 204 95 204 145" stroke="#101214" stroke-width="8" stroke-linecap="round" opacity="0.8" />
+
+  <!-- Yoke & Pivot (Left) -->
+  <path d="M76 150L68 185" stroke="#373D44" stroke-width="6" stroke-linecap="round" />
+  <!-- Yoke & Pivot (Right) -->
+  <path d="M224 150L232 185" stroke="#373D44" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Left Earcup Assembly -->
+  <!-- Cushion -->
+  <rect x="52" y="160" width="22" height="65" rx="10" fill="#151719" stroke="#0A0B0C" stroke-width="1.5" />
+  <!-- Outer Shell -->
+  <rect x="65" y="156" width="30" height="72" rx="14" fill="url(#cupGrad)" stroke="#373D44" stroke-width="1.5" />
+  <circle cx="80" cy="192" r="7" fill="#121416" />
+  <circle cx="80" cy="192" r="3" fill="#3B82F6" opacity="0.6" />
+
+  <!-- Right Earcup Assembly -->
+  <!-- Outer Shell -->
+  <rect x="205" y="156" width="30" height="72" rx="14" fill="url(#cupGrad)" stroke="#373D44" stroke-width="1.5" />
+  <!-- Cushion -->
+  <rect x="226" y="160" width="22" height="65" rx="10" fill="#151719" stroke="#0A0B0C" stroke-width="1.5" />
+  <circle cx="220" cy="192" r="7" fill="#121416" />
+  <circle cx="220" cy="192" r="3" fill="#3B82F6" opacity="0.6" />
+
+  <!-- Brand Minimalist Monogram / Accent -->
+  <path d="M145 60H155" stroke="#64748B" stroke-width="2" stroke-linecap="round" />
+</svg>

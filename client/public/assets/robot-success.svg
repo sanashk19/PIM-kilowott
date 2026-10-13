@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" fill="none">
+  <!-- Glowing green circle -->
+  <circle cx="80" cy="80" r="72" fill="#F0FDF4" stroke="#DCFCE7" stroke-width="2" />
+  <circle cx="80" cy="80" r="54" fill="#FFFFFF" stroke="#BBF7D0" stroke-width="1.5" />
+  
+  <!-- Robot Body -->
+  <rect x="52" y="52" width="56" height="50" rx="16" fill="#F8FAFC" stroke="#166534" stroke-width="2.5" />
+  <rect x="60" y="64" width="40" height="20" rx="9" fill="#0F172A" />
+  
+  <!-- Happy / active glowing green lenses -->
+  <circle cx="70" cy="74" r="5" fill="#22C55E" />
+  <circle cx="70" cy="74" r="2" fill="#FFFFFF" />
+  <circle cx="90" cy="74" r="5" fill="#22C55E" />
+  <circle cx="90" cy="74" r="2" fill="#FFFFFF" />
+  
+  <!-- Antenna with green beam -->
+  <path d="M80 52V40" stroke="#166534" stroke-width="2.5" stroke-linecap="round" />
+  <circle cx="80" cy="38" r="4.5" fill="#22C55E" stroke="#166534" stroke-width="2" />
+  
+  <!-- Success Badge Icon Floating -->
+  <circle cx="114" cy="50" r="14" fill="#16A34A" />
+  <path d="M109 50L112.5 53.5L119 46.5" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Pedestal -->
+  <path d="M64 102H96L102 116H58L64 102Z" fill="#DCFCE7" stroke="#166534" stroke-width="2" stroke-linejoin="round" />
+</svg>

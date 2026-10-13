@@ -6,7 +6,7 @@ export function runSeed(): void {
   initializeSchema();
   const db = getDb();
 
-  console.log('🌱 Seeding PIM Sentinel database...');
+  console.log('🌱 Seeding PIM Sentinel enterprise database...');
 
   // Clear existing data
   db.exec(`
@@ -31,40 +31,42 @@ export function runSeed(): void {
 
   // 2. Categories
   const catStmt = db.prepare('INSERT INTO categories (id, name, slug, description, woo_id) VALUES (?, ?, ?, ?, ?)');
-  catStmt.run(1, 'Audio & Electronics', 'audio-electronics', 'Headphones, speakers, and premium audio equipment', 11);
-  catStmt.run(2, 'Furniture & Office', 'furniture-office', 'Ergonomic chairs, desks, and workspace essentials', 12);
-  catStmt.run(3, 'Footwear & Apparel', 'footwear-apparel', 'Performance shoes, activewear, and running gear', 13);
-  catStmt.run(4, 'Fitness & Outdoors', 'fitness-outdoors', 'Hydration, gym gear, and outdoor survival accessories', 14);
-  catStmt.run(5, 'Computer Peripherals', 'computer-peripherals', 'Mechanical keyboards, gaming mice, and studio hubs', 15);
-  catStmt.run(6, 'Gourmet & Groceries', 'gourmet-groceries', 'Artisanal roasts, specialty snacks, and whole foods', 16);
-  catStmt.run(7, 'Smart Home & Lighting', 'smart-home-lighting', 'Ambient lighting, smart bulbs, and automation hubs', 17);
+  catStmt.run(1, 'Electronics', 'electronics', 'Audio, wearable technology, and electronic gear', 11);
+  catStmt.run(2, 'Computer Peripherals', 'computer-peripherals', 'Mechanical keyboards, mice, and studio hubs', 12);
+  catStmt.run(3, 'Kitchen', 'kitchen', 'Brew kits, pour-over gear, and kitchen essentials', 13);
+  catStmt.run(4, 'Home & Living', 'home-living', 'Ambient lighting and modern home aesthetics', 14);
+  catStmt.run(5, 'Grocery', 'grocery', 'Artisanal roasts, specialty coffee, and fine goods', 15);
+  catStmt.run(6, 'Fashion & Accessories', 'fashion-accessories', 'Handcrafted leather goods and personal accessories', 16);
+  catStmt.run(7, 'Furniture & Office', 'furniture-office', 'Ergonomic chairs and workspace ergonomics', 17);
+  catStmt.run(8, 'Fitness & Outdoors', 'fitness-outdoors', 'Hydration and outdoor equipment', 18);
 
   // 3. Attributes & Options
   const attrStmt = db.prepare('INSERT INTO attributes (id, name, slug, type, is_variation, woo_id) VALUES (?, ?, ?, ?, ?, ?)');
   attrStmt.run(1, 'Color', 'color', 'select', 1, 21);
-  attrStmt.run(2, 'Size', 'size', 'select', 1, 22);
-  attrStmt.run(3, 'Connectivity', 'connectivity', 'select', 0, 23);
-  attrStmt.run(4, 'Material', 'material', 'select', 0, 24);
+  attrStmt.run(2, 'Connectivity', 'connectivity', 'select', 0, 22);
+  attrStmt.run(3, 'Material', 'material', 'select', 0, 23);
+  attrStmt.run(4, 'Size', 'size', 'select', 1, 24);
+  attrStmt.run(5, 'Brand', 'brand', 'select', 0, 25);
 
   const optStmt = db.prepare('INSERT INTO attribute_options (attribute_id, value, label) VALUES (?, ?, ?)');
   // Color options
   optStmt.run(1, 'Matte Black', 'Matte Black');
   optStmt.run(1, 'Glacier Silver', 'Glacier Silver');
   optStmt.run(1, 'Midnight Navy', 'Midnight Navy');
-  // Size options
-  optStmt.run(2, 'Medium', 'Medium');
-  optStmt.run(2, 'Large', 'Large');
-  optStmt.run(2, '750ml', '750ml');
   // Connectivity options
-  optStmt.run(3, 'Bluetooth 5.3', 'Bluetooth 5.3');
-  optStmt.run(3, 'USB-C Wired', 'USB-C Wired');
-  optStmt.run(3, '2.4GHz Wireless', '2.4GHz Wireless');
+  optStmt.run(2, 'Bluetooth 5.3', 'Bluetooth 5.3');
+  optStmt.run(2, 'USB-C Wired', 'USB-C Wired');
+  optStmt.run(2, '2.4GHz Wireless', '2.4GHz Wireless');
   // Material options
-  optStmt.run(4, 'Titanium Alloy', 'Titanium Alloy');
-  optStmt.run(4, 'Stainless Steel 316L', 'Stainless Steel 316L');
-  optStmt.run(4, 'Breathable Mesh', 'Breathable Mesh');
+  optStmt.run(3, 'Titanium Alloy', 'Titanium Alloy');
+  optStmt.run(3, 'Stainless Steel 316L', 'Stainless Steel 316L');
+  optStmt.run(3, 'Breathable Mesh', 'Breathable Mesh');
+  // Size options
+  optStmt.run(4, 'Compact', 'Compact');
+  optStmt.run(4, 'Standard', 'Standard');
+  optStmt.run(4, '500g', '500g');
 
-  // Helper to insert product
+  // Insert product helpers
   const prodStmt = db.prepare(`
     INSERT INTO products (
       id, name, slug, sku, type, status, regular_price, sale_price,
@@ -76,11 +78,9 @@ export function runSeed(): void {
       ?, ?, ?, ?, ?, ?, ?
     )
   `);
-
   const prodCatStmt = db.prepare('INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)');
   const prodAttrStmt = db.prepare('INSERT INTO product_attributes (product_id, attribute_id, selected_values) VALUES (?, ?, ?)');
 
-  // Helper for mock woo product
   const mockWooStmt = db.prepare(`
     INSERT INTO mock_woo_products (
       woo_id, name, slug, sku, type, status, regular_price, sale_price,
@@ -93,273 +93,196 @@ export function runSeed(): void {
     )
   `);
 
-  // ========================================================
-  // PRODUCT 1: EXCELLENT (Score ~95 - Benchmark control)
-  // ========================================================
-  const p1Raw = {
-    id: 1,
-    name: 'Apex Pro Wireless Active Noise-Cancelling Headphones',
-    slug: 'apex-pro-wireless-anc-headphones',
-    sku: 'AUDIO-APX-001',
-    type: 'simple' as const,
-    status: 'publish' as const,
-    regular_price: 12999,
-    sale_price: 9999,
-    stock_quantity: 45,
-    manage_stock: true,
-    description: '<p>Engineered for discerning audiophiles and professionals, the <strong>Apex Pro</strong> features hybrid dual-driver acoustic architecture delivering pristine high-fidelity audio with ultra-deep bass response.</p><ul><li>45dB Adaptive Active Noise Cancellation</li><li>Up to 55-hour battery lifespan with Rapid Charge</li><li>Ultra-soft memory foam earcups for all-day listening comfort</li><li>Multipoint Bluetooth 5.3 pairing across laptop and mobile</li></ul>',
-    short_description: 'Studio-grade wireless ANC headphones featuring 55-hour battery life and custom 40mm titanium drivers.',
-    image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-    brand: 'ApexAudio',
-    woo_id: 101,
-    sync_status: 'synced' as const,
-    categories: [{ id: 1, name: 'Audio & Electronics', slug: 'audio-electronics' }],
-    product_attributes: [{ attribute_id: 1, selected_values: ['Matte Black', 'Glacier Silver'] }],
-  };
-  const p1Assessment = QualityScoreService.assess(p1Raw as any);
+  // Product 1: Apex Pro Wireless Headphones
   prodStmt.run(
-    p1Raw.id, p1Raw.name, p1Raw.slug, p1Raw.sku, p1Raw.type, p1Raw.status,
-    p1Raw.regular_price, p1Raw.sale_price, p1Raw.stock_quantity, 1,
-    p1Raw.description, p1Raw.short_description, p1Raw.image_url, p1Raw.brand,
-    p1Raw.woo_id, p1Raw.sync_status, p1Assessment.score, JSON.stringify(p1Assessment.issues),
-    new Date(Date.now() - 3600000).toISOString()
+    1, 'Apex Pro Wireless Headphones', 'apex-pro-wireless-headphones', 'AERO-01', 'simple', 'draft',
+    7499, null, 15, 1,
+    'Active noise cancelling headphones with deep bass response.',
+    'Studio headphones featuring 40mm drivers.',
+    '/assets/products/headphones.svg', 'Sony', null, 'not_synced', 57,
+    JSON.stringify([
+      { rule: 'description_length', field: 'description', severity: 'high', message: 'Missing rich product description with specifications' },
+      { rule: 'attribute_completeness', field: 'attributes', severity: 'medium', message: 'Missing key attributes (Color, Connectivity)' },
+      { rule: 'category_validation', field: 'categories', severity: 'medium', message: 'Category hierarchy is incomplete for WooCommerce electronics' },
+      { rule: 'price_validation', field: 'sale_price', severity: 'low', message: 'No promotional sale price defined' },
+      { rule: 'image_resolution', field: 'images', severity: 'medium', message: 'Only 1 product image present, recommend 3+' }
+    ]),
+    null
   );
   prodCatStmt.run(1, 1);
-  prodAttrStmt.run(1, 1, JSON.stringify(['Matte Black', 'Glacier Silver']));
-  prodAttrStmt.run(1, 3, JSON.stringify(['Bluetooth 5.3']));
+  prodAttrStmt.run(1, 1, JSON.stringify(['Matte Black']));
 
-  // Mirror in Mock Woo
+  // Product 2: AeroPulse Wireless Headphones (Conflict demo)
+  prodStmt.run(
+    2, 'AeroPulse Wireless Headphones', 'aeropulse-wireless-headphones', 'AERO-02', 'simple', 'draft',
+    6999, 6499, 24, 1,
+    '<p>Lightweight over-ear wireless headphones with quick acoustic tuning and dynamic transparency mode.</p>',
+    'Comfortable everyday wireless headset with 30-hour playback.',
+    '/assets/products/headphones.svg', 'Sony', 101, 'modified', 55,
+    JSON.stringify([
+      { rule: 'conflict_detected', field: 'price', severity: 'high', message: 'PIM price ₹6,999 differs from WooCommerce price ₹7,999' },
+      { rule: 'stock_conflict', field: 'stock_quantity', severity: 'high', message: 'PIM stock 24 differs from WooCommerce stock 20' }
+    ]),
+    new Date(Date.now() - 3600000).toISOString()
+  );
+  prodCatStmt.run(2, 1);
   mockWooStmt.run(
-    101, p1Raw.name, p1Raw.slug, p1Raw.sku, 'simple', 'publish',
-    12999, 9999, 45, p1Raw.description, p1Raw.short_description,
-    p1Raw.image_url, p1Raw.brand,
-    JSON.stringify([{ id: 11, name: 'Audio & Electronics', slug: 'audio-electronics' }]),
-    JSON.stringify([{ name: 'Color', options: ['Matte Black', 'Glacier Silver'] }])
+    101, 'Apex Pro Wireless Headphones', 'aero-01-woo', 'AERO-02', 'simple', 'publish',
+    7999, null, 20, // Remote values divergent!
+    '<p>Legacy WooCommerce product description.</p>', 'Legacy short desc',
+    '/assets/products/headphones.svg', 'Sony',
+    JSON.stringify([{ id: 11, name: 'Footwear', slug: 'footwear' }]), // Deliberate category mismatch demo
+    JSON.stringify([])
   );
 
-  // ========================================================
-  // PRODUCT 2: MISSING INFORMATION (Score ~40 - Needs Attention)
-  // Demo path: AI Agent generates description, fixes SEO, assigns category
-  // ========================================================
-  const p2Raw = {
-    id: 2,
-    name: 'Ergonomic Mesh Office Chair',
-    slug: 'ergonomic-mesh-office-chair',
-    sku: 'FURN-CH-002',
-    type: 'simple' as const,
-    status: 'publish' as const,
-    regular_price: 7499,
-    sale_price: null,
-    stock_quantity: 12,
-    manage_stock: true,
-    description: null,          // Missing description!
-    short_description: null,    // Missing short desc!
-    image_url: null,            // Missing image!
-    brand: null,                // Missing brand!
-    woo_id: null,
-    sync_status: 'not_synced' as const,
-    categories: [],             // Missing category!
-    product_attributes: [],     // Missing attributes!
-  };
-  const p2Assessment = QualityScoreService.assess(p2Raw as any);
+  // Product 3: KeyCraft RGB Hot-Swappable Mechanical Keyboard
   prodStmt.run(
-    p2Raw.id, p2Raw.name, p2Raw.slug, p2Raw.sku, p2Raw.type, p2Raw.status,
-    p2Raw.regular_price, null, p2Raw.stock_quantity, 1,
-    null, null, null, null, null,
-    p2Raw.sync_status, p2Assessment.score, JSON.stringify(p2Assessment.issues), null
-  );
-
-  // ========================================================
-  // PRODUCT 3: PRICING PROBLEMS (Score ~45 - Critical Issue)
-  // Sale price (6499) > Regular price (4999) - Fatal validation error!
-  // ========================================================
-  const p3Raw = {
-    id: 3,
-    name: 'Ultra-Light Titanium Trail Running Shoes',
-    slug: 'ultra-light-titanium-trail-running-shoes',
-    sku: 'FOOT-RUN-003',
-    type: 'simple' as const,
-    status: 'publish' as const,
-    regular_price: 4999,
-    sale_price: 6499,          // INVALID: sale > regular!
-    stock_quantity: 20,
-    manage_stock: true,
-    description: '<p>Technical lightweight trail shoes designed for technical backcountry ascents and wet mountain terrain.</p>',
-    short_description: 'High-traction all-terrain running shoe with reinforced titanium shank.',
-    image_url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80',
-    brand: 'Vanguard Athletics',
-    woo_id: null,
-    sync_status: 'not_synced' as const,
-    categories: [{ id: 3, name: 'Footwear & Apparel', slug: 'footwear-apparel' }],
-    product_attributes: [],
-  };
-  const p3Assessment = QualityScoreService.assess(p3Raw as any);
-  prodStmt.run(
-    p3Raw.id, p3Raw.name, p3Raw.slug, p3Raw.sku, p3Raw.type, p3Raw.status,
-    p3Raw.regular_price, p3Raw.sale_price, p3Raw.stock_quantity, 1,
-    p3Raw.description, p3Raw.short_description, p3Raw.image_url, p3Raw.brand,
-    null, p3Raw.sync_status, p3Assessment.score, JSON.stringify(p3Assessment.issues), null
-  );
-  prodCatStmt.run(3, 3);
-
-  // ========================================================
-  // PRODUCT 4: ATTRIBUTE INCOMPLETENESS (Score ~65 - Needs Specs)
-  // Missing specs/attributes for filtration
-  // ========================================================
-  const p4Raw = {
-    id: 4,
-    name: 'HydraCore Thermal Insulated Water Bottle 750ml',
-    slug: 'hydracore-thermal-insulated-water-bottle-750ml',
-    sku: 'FIT-HYD-004',
-    type: 'simple' as const,
-    status: 'publish' as const,
-    regular_price: 1499,
-    sale_price: 1299,
-    stock_quantity: 80,
-    manage_stock: true,
-    description: '<p>Vacuum sealed sports bottle that keeps cold drinks ice-cold for 24 hours and hot coffee steaming for 12 hours.</p>',
-    short_description: 'Double-walled stainless steel flask with leak-proof sport lid.',
-    image_url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&q=80',
-    brand: 'HydraCore',
-    woo_id: null,
-    sync_status: 'not_synced' as const,
-    categories: [{ id: 4, name: 'Fitness & Outdoors', slug: 'fitness-outdoors' }],
-    product_attributes: [],    // Missing attributes
-  };
-  const p4Assessment = QualityScoreService.assess(p4Raw as any);
-  prodStmt.run(
-    p4Raw.id, p4Raw.name, p4Raw.slug, p4Raw.sku, p4Raw.type, p4Raw.status,
-    p4Raw.regular_price, p4Raw.sale_price, p4Raw.stock_quantity, 1,
-    p4Raw.description, p4Raw.short_description, p4Raw.image_url, p4Raw.brand,
-    null, p4Raw.sync_status, p4Assessment.score, JSON.stringify(p4Assessment.issues), null
-  );
-  prodCatStmt.run(4, 4);
-
-  // ========================================================
-  // PRODUCT 5: CONFLICT DEMO (Score ~90)
-  // PIM has Price = ₹4499 / Stock = 35
-  // Mock WooCommerce has Price = ₹3499 / Stock = 15
-  // Produces clear CONFLICT DETECTED in Pre-Flight Diff!
-  // ========================================================
-  const p5Raw = {
-    id: 5,
-    name: 'KeyCraft RGB Hot-Swappable Mechanical Keyboard',
-    slug: 'keycraft-rgb-mechanical-keyboard',
-    sku: 'TECH-KB-005',
-    type: 'simple' as const,
-    status: 'publish' as const,
-    regular_price: 4499,
-    sale_price: 3999,
-    stock_quantity: 35,
-    manage_stock: true,
-    description: '<p>Compact 75% mechanical keyboard featuring custom linear switches, south-facing RGB illumination, and aluminum top plate.</p>',
-    short_description: 'Customizable 75% hot-swap keyboard with sound-dampening silicone foam.',
-    image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80',
-    brand: 'KeyCraft',
-    woo_id: 102,
-    sync_status: 'modified' as const,
-    categories: [{ id: 5, name: 'Computer Peripherals', slug: 'computer-peripherals' }],
-    product_attributes: [{ attribute_id: 3, selected_values: ['USB-C Wired'] }],
-  };
-  const p5Assessment = QualityScoreService.assess(p5Raw as any);
-  prodStmt.run(
-    p5Raw.id, p5Raw.name, p5Raw.slug, p5Raw.sku, p5Raw.type, p5Raw.status,
-    p5Raw.regular_price, p5Raw.sale_price, p5Raw.stock_quantity, 1,
-    p5Raw.description, p5Raw.short_description, p5Raw.image_url, p5Raw.brand,
-    p5Raw.woo_id, p5Raw.sync_status, p5Assessment.score, JSON.stringify(p5Assessment.issues),
+    3, 'KeyCraft RGB Hot-Swappable Mechanical Keyboard', 'keycraft-rgb-mechanical-keyboard', 'KEY-02', 'simple', 'draft',
+    5566, 4999, 10, 1,
+    '<p>75% compact mechanical keyboard with gasket mount design and pre-lubed mechanical switches.</p>',
+    'Hot-swappable RGB keyboard with aluminum volume knob.',
+    '/assets/products/keyboard.svg', 'KeyCraft', 102, 'modified', 55,
+    JSON.stringify([
+      { rule: 'stock_depleted', field: 'stock', severity: 'medium', message: 'Remote WooCommerce stock is currently 0 (Out of stock)' }
+    ]),
     new Date(Date.now() - 7200000).toISOString()
   );
-  prodCatStmt.run(5, 5);
-  prodAttrStmt.run(5, 3, JSON.stringify(['USB-C Wired']));
-
-  // Divergent remote state in Mock WooCommerce:
+  prodCatStmt.run(3, 2);
+  prodAttrStmt.run(3, 2, JSON.stringify(['USB-C Wired']));
   mockWooStmt.run(
-    102, p5Raw.name, p5Raw.slug, p5Raw.sku, 'simple', 'publish',
-    3499, 2999, 15, // DIVERGENT PRICE & STOCK!
-    p5Raw.description, p5Raw.short_description, p5Raw.image_url, p5Raw.brand,
-    JSON.stringify([{ id: 15, name: 'Computer Peripherals', slug: 'computer-peripherals' }]),
+    102, 'KeyCraft RGB Hot-Swappable Mechanical Keyboard', 'keycraft-rgb-kb', 'KEY-02', 'simple', 'publish',
+    3499, 2999, 0, // Out of stock in mock store
+    'Mechanical keyboard', 'KeyCraft RGB', '/assets/products/keyboard.svg', 'KeyCraft',
+    JSON.stringify([{ id: 12, name: 'Computer Peripherals', slug: 'computer-peripherals' }]),
     JSON.stringify([{ name: 'Connectivity', options: ['USB-C Wired'] }])
   );
 
-  // ========================================================
-  // PRODUCT 6: SYNCED & MODIFIED
-  // Stock updated in PIM, ready for quick push
-  // ========================================================
-  const p6Raw = {
-    id: 6,
-    name: 'OriginRoasts Single-Origin Ethiopian Dark Roast 500g',
-    slug: 'originroasts-ethiopian-dark-roast-500g',
-    sku: 'FOOD-COF-006',
-    type: 'simple' as const,
-    status: 'publish' as const,
-    regular_price: 899,
-    sale_price: 799,
-    stock_quantity: 95, // Changed from 110 in remote
-    manage_stock: true,
-    description: '<p>Hand-harvested Yirgacheffe coffee beans offering notes of wild berries, dark cocoa, and balanced citrus acidity.</p>',
-    short_description: 'Single-origin washed Ethiopian Arabica beans, roasted fresh in small batches.',
-    image_url: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800&q=80',
-    brand: 'OriginRoasts',
-    woo_id: 103,
-    sync_status: 'modified' as const,
-    categories: [{ id: 6, name: 'Gourmet & Groceries', slug: 'gourmet-groceries' }],
-    product_attributes: [{ attribute_id: 2, selected_values: ['Medium'] }],
-  };
-  const p6Assessment = QualityScoreService.assess(p6Raw as any);
+  // Product 4: AeroPress Travel Brew Kit
   prodStmt.run(
-    p6Raw.id, p6Raw.name, p6Raw.slug, p6Raw.sku, p6Raw.type, p6Raw.status,
-    p6Raw.regular_price, p6Raw.sale_price, p6Raw.stock_quantity, 1,
-    p6Raw.description, p6Raw.short_description, p6Raw.image_url, p6Raw.brand,
-    p6Raw.woo_id, p6Raw.sync_status, p6Assessment.score, JSON.stringify(p6Assessment.issues),
+    4, 'AeroPress Travel Brew Kit', 'aeropress-travel-brew-kit', 'COF-AERO-099', 'simple', 'draft',
+    3499, 2999, 15, 1,
+    '<p>All-in-one travel coffee press featuring silicone sealing ring, micro-filters, and compact mug casing.</p>',
+    'Ultra-portable coffee press for smooth, grit-free espresso-style coffee.',
+    '/assets/products/brewer.svg', 'AeroCraft', null, 'not_synced', 87,
+    JSON.stringify([
+      { rule: 'attribute_options', field: 'attributes', severity: 'low', message: 'Capacity specification not linked' }
+    ]),
+    null
+  );
+  prodCatStmt.run(4, 3);
+  prodAttrStmt.run(4, 3, JSON.stringify(['Titanium Alloy']));
+
+  // Product 5: Ambient LED Light Bar
+  prodStmt.run(
+    5, 'Ambient LED Light Bar', 'ambient-led-light-bar', 'LIGHT-007', 'simple', 'draft',
+    2499, 1999, 60, 1,
+    '<p>Sound-reactive RGB ambient light bar with desktop mounts and dual spectrum color blending.</p>',
+    'Dynamic ambient light bar with wireless sync.',
+    '/assets/products/led-bar.svg', 'LuminaTech', null, 'not_synced', 62,
+    JSON.stringify([
+      { rule: 'category_path', field: 'categories', severity: 'medium', message: 'Category sub-taxonomies should be mapped' }
+    ]),
+    null
+  );
+  prodCatStmt.run(5, 4);
+
+  // Product 6: Ethiopian Dark Roast Coffee
+  prodStmt.run(
+    6, 'Ethiopian Dark Roast Coffee', 'ethiopian-dark-roast-coffee', 'FOOD-COF-006', 'simple', 'publish',
+    899, 799, 110, 1,
+    '<p>Hand-harvested Yirgacheffe single-origin dark roast with notes of wild berries and rich dark chocolate.</p>',
+    '500g whole bean specialty roasted Ethiopian Arabica coffee.',
+    '/assets/products/coffee.svg', 'OriginRoasts', 103, 'synced', 92,
+    JSON.stringify([]),
     new Date(Date.now() - 14400000).toISOString()
   );
-  prodCatStmt.run(6, 6);
-  prodAttrStmt.run(6, 2, JSON.stringify(['Medium']));
-
+  prodCatStmt.run(6, 5);
+  prodAttrStmt.run(6, 4, JSON.stringify(['500g']));
   mockWooStmt.run(
-    103, p6Raw.name, p6Raw.slug, p6Raw.sku, 'simple', 'publish',
-    899, 799, 110, // Stock differs (110 vs 95)
-    p6Raw.description, p6Raw.short_description, p6Raw.image_url, p6Raw.brand,
-    JSON.stringify([{ id: 16, name: 'Gourmet & Groceries', slug: 'gourmet-groceries' }]),
-    JSON.stringify([{ name: 'Size', options: ['Medium'] }])
+    103, 'Ethiopian Dark Roast Coffee', 'ethiopian-dark-roast', 'FOOD-COF-006', 'simple', 'publish',
+    899, 799, 110,
+    '500g whole bean specialty roast.', 'Ethiopian Arabica Coffee 500g',
+    '/assets/products/coffee.svg', 'OriginRoasts',
+    JSON.stringify([{ id: 15, name: 'Grocery', slug: 'grocery' }]),
+    JSON.stringify([{ name: 'Size', options: ['500g'] }])
   );
 
-  // ========================================================
-  // PRODUCT 7: MISSING SKU (Score ~35 - Critical Fatal Error)
-  // SKU is required for Woo sync
-  // ========================================================
-  const p7Raw = {
-    id: 7,
-    name: 'Smart Ambient Rhythm LED Light Bar',
-    slug: 'smart-ambient-rhythm-led-light-bar',
-    sku: '', // EMPTY SKU!
-    type: 'simple' as const,
-    status: 'draft' as const,
-    regular_price: 2499,
-    sale_price: 1999,
-    stock_quantity: 60,
-    manage_stock: true,
-    description: '<p>RGBIC dynamic light bars synchronized with music tempo and monitor backlighting.</p>',
-    short_description: 'Sound-reactive RGB lighting bar with app control.',
-    image_url: 'https://images.unsplash.com/photo-1543512214-318c7553f230?w=800&q=80',
-    brand: 'LuminaTech',
-    woo_id: null,
-    sync_status: 'not_synced' as const,
-    categories: [{ id: 7, name: 'Smart Home & Lighting', slug: 'smart-home-lighting' }],
-    product_attributes: [],
-  };
-  const p7Assessment = QualityScoreService.assess(p7Raw as any);
+  // Product 7: Leather Crossbody Bag
   prodStmt.run(
-    p7Raw.id, p7Raw.name, p7Raw.slug, 'TEMP-NO-SKU', p7Raw.type, p7Raw.status,
-    p7Raw.regular_price, p7Raw.sale_price, p7Raw.stock_quantity, 1,
-    p7Raw.description, p7Raw.short_description, p7Raw.image_url, p7Raw.brand,
-    null, p7Raw.sync_status, p7Assessment.score, JSON.stringify(p7Assessment.issues), null
+    7, 'Leather Crossbody Bag', 'leather-crossbody-bag', 'BAG-LTH-01', 'simple', 'publish',
+    5099, 4599, 18, 1,
+    '<p>Full-grain vegetable-tanned leather messenger bag with solid antique brass hardware and adjustable strap.</p>',
+    'Artisanal handcrafted leather crossbody bag.',
+    '/assets/products/leather-bag.svg', 'Heritage', 104, 'synced', 88,
+    JSON.stringify([]),
+    new Date(Date.now() - 28800000).toISOString()
   );
-  // Specifically update SKU to empty string to test empty SKU validation
-  db.prepare("UPDATE products SET sku = '' WHERE id = 7").run();
-  prodCatStmt.run(7, 7);
+  prodCatStmt.run(7, 6);
+  prodAttrStmt.run(7, 3, JSON.stringify(['Breathable Mesh']));
+  mockWooStmt.run(
+    104, 'Leather Crossbody Bag', 'leather-crossbody-bag', 'BAG-LTH-01', 'simple', 'publish',
+    5099, 4599, 18,
+    'Full-grain leather bag', 'Handcrafted leather crossbody bag',
+    '/assets/products/leather-bag.svg', 'Heritage',
+    JSON.stringify([{ id: 16, name: 'Fashion & Accessories', slug: 'fashion-accessories' }]),
+    JSON.stringify([])
+  );
 
-  // 4. Initial Audit Logs
+  // Product 8: Smart Watch Series 5
+  prodStmt.run(
+    8, 'Smart Watch Series 5', 'smart-watch-series-5', 'WATCH-S5', 'simple', 'publish',
+    14999, 12999, 8, 1,
+    '<p>Titanium case with always-on retina display, precision fitness tracking, ECG sensor, and water resistance to 50m.</p>',
+    'Flagship smartwatch with multi-day battery and biometric sensors.',
+    '/assets/products/smartwatch.svg', 'ChronoTech', 105, 'synced', 78,
+    JSON.stringify([]),
+    new Date(Date.now() - 43200000).toISOString()
+  );
+  prodCatStmt.run(8, 1);
+  prodAttrStmt.run(8, 1, JSON.stringify(['Matte Black']));
+  mockWooStmt.run(
+    105, 'Smart Watch Series 5', 'smart-watch-series-5', 'WATCH-S5', 'simple', 'publish',
+    14999, 12999, 8,
+    'Flagship smartwatch', 'Smart Watch Series 5',
+    '/assets/products/smartwatch.svg', 'ChronoTech',
+    JSON.stringify([{ id: 11, name: 'Electronics', slug: 'electronics' }]),
+    JSON.stringify([{ name: 'Color', options: ['Matte Black'] }])
+  );
+
+  // Product 9: Ergonomic Mesh Office Chair
+  prodStmt.run(
+    9, 'Ergonomic Mesh Office Chair', 'ergonomic-mesh-office-chair', 'FURN-CH-002', 'simple', 'draft',
+    7499, null, 12, 1,
+    null, null, null, 'ErgoPro', null, 'not_synced', 45,
+    JSON.stringify([
+      { rule: 'missing_description', field: 'description', severity: 'high', message: 'No product description found' },
+      { rule: 'missing_image', field: 'image_url', severity: 'high', message: 'No product photography uploaded' }
+    ]),
+    null
+  );
+  prodCatStmt.run(9, 7);
+
+  // Product 10: HydraCore Thermal Insulated Water Bottle 750ml
+  prodStmt.run(
+    10, 'HydraCore Thermal Insulated Water Bottle 750ml', 'hydracore-water-bottle-750ml', 'FIT-HYD-004', 'simple', 'publish',
+    1499, 1299, 80, 1,
+    '<p>Double-wall vacuum insulated stainless steel water bottle. Keeps drinks cold for 24 hours.</p>',
+    'Sports insulated bottle 750ml.',
+    null, 'HydraCore', 106, 'synced', 70,
+    JSON.stringify([]),
+    new Date(Date.now() - 86400000).toISOString()
+  );
+  prodCatStmt.run(10, 8);
+  mockWooStmt.run(
+    106, 'HydraCore Thermal Insulated Water Bottle 750ml', 'hydracore-bottle', 'FIT-HYD-004', 'simple', 'publish',
+    1499, 1299, 80,
+    'Vacuum insulated bottle', 'Sports bottle',
+    null, 'HydraCore',
+    JSON.stringify([{ id: 18, name: 'Fitness & Outdoors', slug: 'fitness-outdoors' }]),
+    JSON.stringify([])
+  );
+
+  // 4. Meaningful Audit Trail Logs
   const logStmt = db.prepare(`
     INSERT INTO sync_logs (
       product_id, product_name, entity_type, direction, action,
@@ -368,27 +291,62 @@ export function runSeed(): void {
   `);
 
   logStmt.run(
-    1, p1Raw.name, 'product', 'pim_to_woo', 'create',
-    'success', JSON.stringify(['name', 'sku', 'regular_price', 'sale_price', 'stock_quantity']),
-    JSON.stringify({ sku: 'AUDIO-APX-001', name: p1Raw.name, regular_price: '12999' }),
-    JSON.stringify({ id: 101, status: 'publish' }),
+    1, 'Apex Pro Wireless Headphones', 'product', 'pim_to_woo', 'update',
+    'success', JSON.stringify(['regular_price', 'stock_quantity']),
+    JSON.stringify({ sku: 'AERO-01', regular_price: 7499, stock_quantity: 15 }),
+    JSON.stringify({ id: 101, status: 'updated' }),
+    null,
+    new Date(Date.now() - 2 * 60000).toISOString()
+  );
+
+  logStmt.run(
+    7, 'Leather Crossbody Bag', 'product', 'pim_to_woo', 'ai_analysis',
+    'success', JSON.stringify(['ai_review', 'quality_score']),
+    JSON.stringify({ sku: 'BAG-LTH-01', action: 'ai_enrichment' }),
+    JSON.stringify({ quality_score: 88, issues: 0 }),
+    null,
+    new Date(Date.now() - 12 * 60000).toISOString()
+  );
+
+  logStmt.run(
+    8, 'Smart Watch Series 5', 'product', 'woo_to_pim', 'import',
+    'failed', JSON.stringify(['categories', 'attributes']),
+    JSON.stringify({ woo_id: 105 }),
+    JSON.stringify({ error: 'Schema validation error: Missing attribute mapping' }),
+    'Attribute mapping mismatch for Color variation on remote payload',
+    new Date(Date.now() - 28 * 60000).toISOString()
+  );
+
+  logStmt.run(
+    6, 'Ethiopian Dark Roast Coffee', 'product', 'pim_to_woo', 'create',
+    'success', JSON.stringify(['name', 'sku', 'price', 'stock']),
+    JSON.stringify({ sku: 'FOOD-COF-006', stock: 110 }),
+    JSON.stringify({ id: 103, status: 'publish' }),
     null,
     new Date(Date.now() - 3600000).toISOString()
   );
 
   logStmt.run(
-    5, p5Raw.name, 'product', 'woo_to_pim', 'import',
-    'warning', JSON.stringify(['regular_price', 'stock_quantity']),
-    JSON.stringify({ woo_id: 102 }),
-    JSON.stringify({ message: 'Remote divergence detected. PIM retains canonical draft.' }),
-    'Discrepancy detected: Remote price ₹3499 differs from PIM price ₹4499',
-    new Date(Date.now() - 7200000).toISOString()
+    5, 'Ambient LED Light Bar', 'product', 'pim_to_woo', 'update',
+    'success', JSON.stringify(['stock_quantity']),
+    JSON.stringify({ sku: 'LIGHT-007', stock_quantity: 60 }),
+    JSON.stringify({ id: 104, status: 'updated' }),
+    null,
+    new Date(Date.now() - 3 * 3600000).toISOString()
   );
 
-  console.log('✅ Successfully seeded 7 realistic demo products with distinct quality profiles & WooCommerce states!');
+  logStmt.run(
+    3, 'KeyCraft RGB Hot-Swappable Mechanical Keyboard', 'product', 'woo_to_pim', 'import',
+    'success', JSON.stringify(['regular_price', 'stock_quantity']),
+    JSON.stringify({ sku: 'KEY-02' }),
+    JSON.stringify({ id: 102, status: 'imported' }),
+    null,
+    new Date(Date.now() - 4 * 3600000).toISOString()
+  );
+
+  console.log('✅ Successfully seeded 10 realistic products matching the reference mockups!');
 }
 
-// Allow direct execution
 if (process.argv[1]?.endsWith('seed.ts') || process.argv[1]?.endsWith('seed.js')) {
   runSeed();
   process.exit(0);

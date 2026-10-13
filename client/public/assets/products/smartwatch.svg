@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300" fill="none">
+  <rect width="300" height="300" rx="16" fill="#F4F4F3" />
+  
+  <defs>
+    <radialGradient id="swSh" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="watchGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#27272A" />
+      <stop offset="100%" stop-color="#09090B" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <ellipse cx="150" cy="255" rx="55" ry="12" fill="url(#swSh)" />
+
+  <!-- Silicone Strap Upper -->
+  <path d="M125 50H175V110H125V50Z" fill="#18181B" stroke="#09090B" stroke-width="1.5" />
+  <!-- Silicone Strap Lower -->
+  <path d="M125 190H175V250H125V190Z" fill="#18181B" stroke="#09090B" stroke-width="1.5" />
+
+  <!-- Watch Chassis (Aluminum / Titanium) -->
+  <rect x="110" y="105" width="80" height="90" rx="22" fill="url(#watchGrad)" stroke="#3F3F46" stroke-width="2.5" />
+
+  <!-- Digital Crown Dial & Side Button -->
+  <rect x="190" y="122" width="6" height="18" rx="2" fill="#71717A" stroke="#27272A" stroke-width="1" />
+  <rect x="190" y="152" width="4" height="24" rx="2" fill="#52525B" />
+
+  <!-- OLED Display Surface -->
+  <rect x="116" y="111" width="68" height="78" rx="18" fill="#000000" />
+
+  <!-- Watch Face UI -->
+  <text x="150" y="145" font-family="-apple-system, sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" text-anchor="middle">10:42</text>
+  <!-- Activity Rings -->
+  <circle cx="150" cy="165" r="12" stroke="#22C55E" stroke-width="3" fill="none" stroke-dasharray="60 20" />
+  <circle cx="150" cy="165" r="8" stroke="#3B82F6" stroke-width="2.5" fill="none" stroke-dasharray="40 10" />
+</svg>

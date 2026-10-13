@@ -2,28 +2,29 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import {
-  FileText,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCcw,
-  Eye,
-  Loader2,
-  X,
   History,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ArrowRight,
+  Eye,
+  X,
+  ChevronDown,
+  Layers,
+  FileCode,
 } from 'lucide-react';
 import { TopBar } from '../components/TopBar';
 import type { SyncLog } from '../types';
 
 export const SyncHistoryPage: React.FC = () => {
-  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedDirection, setSelectedDirection] = useState('all');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('Last 7 days');
   const [selectedLog, setSelectedLog] = useState<SyncLog | null>(null);
 
   const { data: logsData, isLoading } = useQuery({
-    queryKey: ['sync-logs', selectedStatus, selectedDirection],
+    queryKey: ['sync-logs', selectedDirection],
     queryFn: () =>
       api.getSyncLogs({
-        status: selectedStatus !== 'all' ? selectedStatus : undefined,
         direction: selectedDirection !== 'all' ? selectedDirection : undefined,
       }),
     refetchInterval: 5000,
@@ -32,180 +33,253 @@ export const SyncHistoryPage: React.FC = () => {
   const logs = logsData?.data || [];
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
       <TopBar breadcrumbs={['Operations', 'Sync History']} />
 
-      <div className="p-6 max-w-6xl w-full mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+      <div className="p-6 max-w-7xl w-full mx-auto space-y-6">
+        {/* Header Row (Panel 7) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              Synchronization Audit Trail
+            <h1 className="text-xl font-bold text-[#111916] tracking-tight">
+              Synchronization History
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Immutable ledger of all outbound publish and inbound import operations with raw payloads.
+            <p className="text-xs text-[#5c6660] mt-0.5">
+              Immutable ledger of inbound and outbound product synchronization.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <select
-              value={selectedDirection}
-              onChange={(e) => setSelectedDirection(e.target.value)}
-              className="py-1 px-2.5 bg-white border border-slate-200 rounded text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="all">All Directions</option>
-              <option value="pim_to_woo">PIM → WooCommerce</option>
-              <option value="woo_to_pim">WooCommerce → PIM</option>
-            </select>
+            {/* Direction Filter */}
+            <div className="relative">
+              <select
+                value={selectedDirection}
+                onChange={(e) => setSelectedDirection(e.target.value)}
+                className="appearance-none bg-white border border-[#e6e4df] text-xs font-semibold text-[#111916] pl-3 pr-8 py-1.5 rounded-md shadow-2xs hover:border-[#cbd5e1] focus:outline-none focus:ring-1 focus:ring-[#15803d]"
+              >
+                <option value="all">All Directions</option>
+                <option value="pim_to_woo">PIM → Woo</option>
+                <option value="woo_to_pim">Woo → PIM</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-[#8a948e] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
 
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="py-1 px-2.5 bg-white border border-slate-200 rounded text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="all">All Statuses</option>
-              <option value="success">Success</option>
-              <option value="failed">Failed</option>
-            </select>
+            {/* Time Filter */}
+            <div className="relative">
+              <select
+                value={selectedTimeRange}
+                onChange={(e) => setSelectedTimeRange(e.target.value)}
+                className="appearance-none bg-white border border-[#e6e4df] text-xs font-semibold text-[#111916] pl-3 pr-8 py-1.5 rounded-md shadow-2xs hover:border-[#cbd5e1] focus:outline-none focus:ring-1 focus:ring-[#15803d]"
+              >
+                <option>Last 7 days</option>
+                <option>Last 24 hours</option>
+                <option>Last 30 days</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-[#8a948e] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
         </div>
 
-        {/* Dense Audit Table */}
-        <div className="border border-slate-200 rounded-md bg-white overflow-hidden">
-          {isLoading ? (
-            <div className="py-16 text-center text-slate-400">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-600 mb-2" />
-              <p className="text-xs">Loading operational ledger...</p>
-            </div>
-          ) : (
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/60 border-b border-slate-200 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">
-                <tr>
-                  <th className="py-2.5 px-4">Timestamp</th>
-                  <th className="py-2.5 px-4">Product</th>
-                  <th className="py-2.5 px-4">Direction</th>
-                  <th className="py-2.5 px-4">Operation</th>
-                  <th className="py-2.5 px-4">Status</th>
-                  <th className="py-2.5 px-4">Changed Fields</th>
-                  <th className="py-2.5 px-4 text-right">Payload</th>
+        {/* Enterprise Audit Table (Panel 7) */}
+        <div className="bg-white border border-[#e6e4df] rounded-lg shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto w-full min-w-[760px]">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#fbfaf8] border-b border-[#e6e4df] text-[#5c6660]">
+                  <th className="py-2.5 px-4 font-semibold">Time</th>
+                  <th className="py-2.5 px-4 font-semibold">Product</th>
+                  <th className="py-2.5 px-4 font-semibold">Direction</th>
+                  <th className="py-2.5 px-4 font-semibold">Operation</th>
+                  <th className="py-2.5 px-4 font-semibold">Status</th>
+                  <th className="py-2.5 px-4 font-semibold">Changed Fields</th>
+                  <th className="py-2.5 px-4 font-semibold text-right">Payload</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {logs.map((log) => {
-                  const isSuccess = log.status === 'success';
-                  const productName = log.product_name || log.product?.name || 'Nike Air Max Pro';
-                  const changed = Array.isArray(log.changed_fields)
-                    ? log.changed_fields.join(', ')
-                    : 'price, stock, specs';
+              <tbody className="divide-y divide-[#f4f2ec]">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-[#7d8b82]">
+                      Loading audit ledger...
+                    </td>
+                  </tr>
+                ) : logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-[#7d8b82]">
+                      No audit events recorded in this time range.
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log) => {
+                    const changedFields: string[] = Array.isArray(log.changed_fields)
+                      ? log.changed_fields
+                      : typeof log.changed_fields === 'string'
+                      ? JSON.parse(log.changed_fields || '[]')
+                      : [];
 
-                  return (
-                    <tr key={log.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                        {log.created_at ? new Date(log.created_at).toLocaleString() : 'Today, 2:40 PM'}
-                      </td>
-                      <td className="py-2.5 px-4 font-medium text-slate-900">
-                        {productName}
-                      </td>
-                      <td className="py-2.5 px-4 whitespace-nowrap font-mono text-[11px]">
-                        {log.direction === 'pim_to_woo' ? (
-                          <span className="text-indigo-700 font-semibold">PIM → Woo</span>
-                        ) : (
-                          <span className="text-slate-600">Woo → PIM</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-4 capitalize text-slate-700">
-                        {log.action}
-                      </td>
-                      <td className="py-2.5 px-4 whitespace-nowrap">
-                        {isSuccess ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Success
+                    const isSuccess = log.status === 'success';
+                    const isPimToWoo = log.direction === 'pim_to_woo';
+
+                    // Relative timestamp formatting
+                    const timeAgo = (() => {
+                      const diffMs = Date.now() - new Date(log.created_at).getTime();
+                      const mins = Math.floor(diffMs / 60000);
+                      if (mins < 60) return `${Math.max(1, mins)} min ago`;
+                      const hours = Math.floor(mins / 60);
+                      if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                      return new Date(log.created_at).toLocaleDateString();
+                    })();
+
+                    return (
+                      <tr
+                        key={log.id}
+                        onClick={() => setSelectedLog(log)}
+                        className="hover:bg-[#fbfaf8] transition-colors cursor-pointer group"
+                      >
+                        {/* Time */}
+                        <td className="py-3 px-4 font-medium text-[#5c6660] tabular-nums whitespace-nowrap">
+                          {timeAgo}
+                        </td>
+
+                        {/* Product */}
+                        <td className="py-3 px-4 font-semibold text-[#111916]">
+                          {log.product_name || `Product #${log.product_id}`}
+                        </td>
+
+                        {/* Direction */}
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-medium ${
+                              isPimToWoo
+                                ? 'bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]'
+                                : 'bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]'
+                            }`}
+                          >
+                            {isPimToWoo ? 'PIM → Woo' : 'Woo → PIM'}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                            Failed
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-500 max-w-xs truncate">
-                        {changed}
-                      </td>
-                      <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedLog(log)}
-                          className="px-2 py-1 rounded text-[11px] font-medium text-indigo-700 hover:bg-indigo-50 border border-slate-200 transition-colors"
-                        >
-                          View Payload
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+
+                        {/* Operation */}
+                        <td className="py-3 px-4 text-[#5c6660] capitalize">
+                          {log.action}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 px-4">
+                          {isSuccess ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#15803d]" />
+                              Success
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#fef2f2] text-[#b91c1c] border border-[#fca5a5]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                              Failed
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Changed Fields */}
+                        <td className="py-3 px-4">
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {changedFields.length > 0 ? (
+                              changedFields.slice(0, 3).map((f, i) => (
+                                <span
+                                  key={i}
+                                  className="px-1.5 py-0.2 bg-[#f4f2ec] text-[#5c6660] rounded text-[10px] font-mono"
+                                >
+                                  {f}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[#8a948e]">—</span>
+                            )}
+                            {changedFields.length > 3 && (
+                              <span className="text-[10px] text-[#7d8b82]">
+                                +{changedFields.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Payload Button */}
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLog(log);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-[#f4f2ec] border border-[#e6e4df] text-[11px] font-medium text-[#19201d] transition-colors shadow-2xs"
+                          >
+                            <FileCode className="w-3 h-3 text-[#5c6660]" />
+                            <span>Payload</span>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Payload Modal */}
+      {/* Slide-out Payload Drawer Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-md w-full max-w-2xl shadow-xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                  Transaction Audit Record #{selectedLog.id}
+        <div className="fixed inset-0 z-50 bg-[#111916]/40 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col p-6 space-y-4 animate-in slide-in-from-right duration-200 overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e6e4df]">
+              <div>
+                <h3 className="font-bold text-sm text-[#111916]">
+                  Sync Audit Record #{selectedLog.id}
                 </h3>
+                <div className="text-xs text-[#7d8b82]">
+                  {selectedLog.product_name} · {selectedLog.direction}
+                </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedLog(null)}
-                className="p-1 rounded text-slate-400 hover:text-slate-600"
+                className="p-1 rounded-md text-[#7d8b82] hover:text-[#111916] hover:bg-[#f4f2ec]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
+            {selectedLog.error_message && (
+              <div className="p-3 bg-[#fef2f2] border border-[#fecaca] text-[#dc2626] rounded-md text-xs">
+                <div className="font-bold mb-1">Execution Error</div>
+                <div>{selectedLog.error_message}</div>
+              </div>
+            )}
+
             <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-2 p-2.5 rounded bg-slate-50 border border-slate-200 text-[11px]">
-                <div>
-                  <span className="text-slate-500">Product:</span>{' '}
-                  <strong className="text-slate-800">{selectedLog.product_name || selectedLog.product?.name || 'Nike Air Max Pro'}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-500">Action:</span>{' '}
-                  <strong className="capitalize text-slate-800">{selectedLog.action}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-500">Direction:</span>{' '}
-                  <strong className="text-slate-800 font-mono">{selectedLog.direction}</strong>
-                </div>
-                <div>
-                  <span className="text-slate-500">Status:</span>{' '}
-                  <strong className="capitalize text-slate-800">{selectedLog.status}</strong>
-                </div>
+              <div>
+                <div className="font-bold text-[#111916] mb-1">Request Payload</div>
+                <pre className="p-3 bg-[#111916] text-[#86efac] font-mono text-[11px] rounded-lg overflow-x-auto max-h-56">
+                  {typeof selectedLog.request_payload === 'string'
+                    ? selectedLog.request_payload
+                    : JSON.stringify(selectedLog.request_payload, null, 2)}
+                </pre>
               </div>
 
-              {selectedLog.error_message && (
-                <div className="p-2.5 rounded bg-rose-50 border border-rose-200 text-rose-800 text-[11.5px]">
-                  <strong>Error details:</strong> {selectedLog.error_message}
-                </div>
-              )}
-
               <div>
-                <div className="font-semibold text-slate-700 mb-1 text-[11px]">JSON Payload Record:</div>
-                <pre className="p-3 rounded bg-slate-900 text-slate-100 text-[11px] font-mono overflow-x-auto max-h-64">
-                  {JSON.stringify(selectedLog.request_payload || selectedLog.response_payload || selectedLog, null, 2)}
+                <div className="font-bold text-[#111916] mb-1">Response Payload</div>
+                <pre className="p-3 bg-[#111916] text-[#93c5fd] font-mono text-[11px] rounded-lg overflow-x-auto max-h-56">
+                  {typeof selectedLog.response_payload === 'string'
+                    ? selectedLog.response_payload
+                    : JSON.stringify(selectedLog.response_payload, null, 2)}
                 </pre>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="pt-4 border-t border-[#e6e4df] flex justify-end">
               <button
+                type="button"
                 onClick={() => setSelectedLog(null)}
-                className="px-3 py-1.5 rounded text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700"
+                className="px-4 py-2 rounded-md bg-[#111916] text-white text-xs font-semibold"
               >
-                Close
+                Close Audit Detail
               </button>
             </div>
           </div>

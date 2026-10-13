@@ -6,21 +6,21 @@ import {
   Sparkles,
   CheckCircle2,
   AlertTriangle,
-  ArrowRight,
   RotateCcw,
   Check,
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  ShieldCheck,
   Loader2,
-  ShieldAlert,
 } from 'lucide-react';
 import { TopBar } from '../components/TopBar';
-import type { Product, AgentPlanResult } from '../types';
 
 export const AIReviewPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Load products list for review queue
-  const { data: productsData, isLoading: loadingProducts } = useQuery({
+  const { data: productsData } = useQuery({
     queryKey: ['products'],
     queryFn: () => api.getProducts(),
   });
@@ -29,7 +29,6 @@ export const AIReviewPage: React.FC = () => {
   const initialProductId = Number(searchParams.get('productId')) || products[0]?.id || 1;
   const [selectedProductId, setSelectedProductId] = useState<number>(initialProductId);
 
-  // Sync selected product with URL search param
   useEffect(() => {
     if (products.length > 0 && !selectedProductId) {
       setSelectedProductId(products[0].id);
@@ -38,17 +37,9 @@ export const AIReviewPage: React.FC = () => {
 
   const selectedProduct = products.find((p) => p.id === selectedProductId) || products[0];
 
-  // Fetch AI plan & review diagnosis for selected product
   const { data: planData, isLoading: loadingPlan, refetch: refetchPlan } = useQuery({
     queryKey: ['ai-plan', selectedProductId],
     queryFn: () => (selectedProductId ? api.agentPlan(selectedProductId) : Promise.reject()),
-    enabled: !!selectedProductId,
-  });
-
-  // Fetch pre-flight diff to get WooCommerce comparison values
-  const { data: diffData } = useQuery({
-    queryKey: ['preflight-diff', selectedProductId],
-    queryFn: () => (selectedProductId ? api.getPreFlightDiff(selectedProductId) : Promise.reject()),
     enabled: !!selectedProductId,
   });
 
@@ -58,361 +49,433 @@ export const AIReviewPage: React.FC = () => {
     mutationFn: async ({ field, value }: { field: string; value: any }) => {
       if (!selectedProduct) return;
       const payload: any = { ...selectedProduct };
-      payload[field] = value;
+      if (field === 'description') payload.description = value;
+      if (field === 'category_id') payload.category_id = value;
+      if (field === 'regular_price') payload.regular_price = value;
       return api.updateProduct(selectedProduct.id, payload);
     },
-    onSuccess: (_data, variables) => {
-      setAppliedRecommendations((prev) => ({ ...prev, [variables.field]: true }));
+    onSuccess: (_, vars) => {
+      setAppliedRecommendations((prev) => ({ ...prev, [vars.field]: true }));
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['preflight-diff', selectedProductId] });
-      queryClient.invalidateQueries({ queryKey: ['ai-plan', selectedProductId] });
+      queryClient.invalidateQueries({ queryKey: ['product', selectedProductId] });
     },
   });
 
-  const plan: AgentPlanResult | undefined = planData?.data;
-  const diffs = diffData?.data?.diffs || [];
+  const qualityScore = selectedProduct?.quality_score ?? 57;
 
-  // Comparison fields data matching realistic specs
-  const fields = [
-    {
-      field: 'name',
-      label: 'Product Name',
-      pim: selectedProduct?.name || 'Nike Air Max Pro',
-      woo: 'Nike Air Max Pro',
-      isDiff: false,
-    },
-    {
-      field: 'sku',
-      label: 'SKU',
-      pim: selectedProduct?.sku || 'NK-AM-001',
-      woo: 'NK-AM-001',
-      isDiff: false,
-    },
-    {
-      field: 'price',
-      label: 'Price',
-      pim: `₹${selectedProduct?.regular_price || 8999}`,
-      woo: '₹7,999',
-      isDiff: true,
-      recValue: 8999,
-      note: 'WooCommerce target price is lower by ₹1,000.',
-    },
-    {
-      field: 'category',
-      label: 'Category',
-      pim: selectedProduct?.category?.name || 'Running Shoes',
-      woo: 'Footwear',
-      isDiff: true,
-      recValue: 'Running Shoes',
-      note: "WooCommerce uses 'Footwear' while PIM uses 'Running Shoes'.",
-    },
-    {
-      field: 'brand',
-      label: 'Brand',
-      pim: selectedProduct?.brand || 'Nike',
-      woo: 'Nike',
-      isDiff: false,
-    },
-    {
-      field: 'description',
-      label: 'Description',
-      pim: selectedProduct?.description?.slice(0, 60) + '...' || 'Premium cushioning with breathable materials.',
-      woo: 'Nike running shoes.',
-      isDiff: true,
-      note: 'PIM description contains full SEO attributes and specs.',
-    },
-    {
-      field: 'stock_quantity',
-      label: 'Stock',
-      pim: String(selectedProduct?.stock_quantity ?? 24),
-      woo: '20',
-      isDiff: true,
-      note: 'Inventory discrepancy detected (PIM: 24 vs Woo: 20).',
-    },
-  ];
-
-  const score = selectedProduct?.quality_score ?? 71;
+  const defaultImprovedDesc =
+    'Experience immersive, studio-grade sound with the Apex Pro Wireless Headphones. Engineered with 40mm titanium acoustic drivers, adaptive active noise cancellation, and ultra-plush memory foam earcups for unmatched all-day listening comfort.';
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+    <div className="flex-1 bg-[#fbfaf8] min-h-screen flex flex-col">
       <TopBar breadcrumbs={['Operations', 'AI Review']} />
 
-      <div className="p-6 max-w-6xl w-full mx-auto space-y-5">
-        {/* Page Subheader & Queue Selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+      <div className="p-6 max-w-7xl w-full mx-auto space-y-6">
+        {/* Header Row with Title & Product Dropdown (Panel 4) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h1 className="text-xl font-bold text-[#111916] tracking-tight">
               AI Product Review
-              <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Operational Gate
-              </span>
             </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Review and authorize AI-generated catalog fixes and WooCommerce synchronization reconciliations.
+            <p className="text-xs text-[#5c6660] mt-0.5">
+              Analyze, improve, and prepare your product for WooCommerce.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500 font-medium">Select Product:</label>
-            <select
-              value={selectedProductId}
-              onChange={(e) => {
-                const id = Number(e.target.value);
-                setSelectedProductId(id);
-                setSearchParams({ productId: String(id) });
-              }}
-              className="px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-xs"
-            >
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.sku} - {p.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative min-w-[280px]">
+              <select
+                value={selectedProductId}
+                onChange={(e) => {
+                  const id = Number(e.target.value);
+                  setSelectedProductId(id);
+                  setSearchParams({ productId: id.toString() });
+                }}
+                className="w-full appearance-none bg-white border border-[#e6e4df] text-xs font-semibold text-[#111916] pl-3 pr-8 py-2 rounded-md shadow-2xs hover:border-[#cbd5e1] focus:outline-none focus:ring-1 focus:ring-[#15803d]"
+              >
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.sku || 'NO-SKU'})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-[#8a948e] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
           </div>
         </div>
 
-        {/* Hero Review Header Card */}
-        {selectedProduct && (
-          <div className="border border-slate-200 rounded-md bg-white p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-900">{selectedProduct.name}</h2>
-                <span className="font-mono text-xs text-slate-500 px-1.5 py-0.5 bg-slate-100 rounded">
-                  SKU: {selectedProduct.sku}
-                </span>
-              </div>
-              <div className="text-xs text-slate-500 mt-1 flex items-center gap-3">
-                <span>Category: <strong className="text-slate-700">{selectedProduct.category?.name || 'Footwear'}</strong></span>
-                <span>·</span>
-                <span>Regular Price: <strong className="text-slate-700">₹{selectedProduct.regular_price || 8999}</strong></span>
-                <span>·</span>
-                <span>Stock: <strong className="text-slate-700">{selectedProduct.stock_quantity ?? 24} units</strong></span>
-              </div>
+        {/* 3-Column Layout Matching Reference Panel 4 */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* COLUMN 1: Workflow Stepper (Left, col-span-3) */}
+          <div className="lg:col-span-3 bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-5">
+            <div className="text-xs font-bold text-[#111916] uppercase tracking-wider">
+              Review Pipeline
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-[11px] text-slate-500 font-medium">AI Quality Score</div>
-                <div className="flex items-center gap-1.5 justify-end mt-0.5">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      score >= 80 ? 'bg-emerald-500' : score >= 65 ? 'bg-amber-500' : 'bg-rose-500'
-                    }`}
+            <div className="space-y-4 relative">
+              {/* Vertical connector line */}
+              <div className="absolute left-3.5 top-3 bottom-3 w-px bg-[#e6e4df] -z-0" />
+
+              {/* Step 1: Analyze Product */}
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="w-7 h-7 rounded-full bg-[#15803d] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <Check className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-[#111916]">1. Analyze Product</div>
+                  <div className="text-[11px] text-[#7d8b82]">Checking product data...</div>
+                </div>
+              </div>
+
+              {/* Step 2: Identify Issues */}
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="w-7 h-7 rounded-full bg-[#15803d] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                  <Check className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-[#111916]">2. Identify Issues</div>
+                  <div className="text-[11px] text-[#7d8b82]">Found 5 issues</div>
+                </div>
+              </div>
+
+              {/* Step 3: Generate Recommendations (Active) */}
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="w-7 h-7 rounded-full bg-[#7c3aed] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ring-4 ring-[#f5f3ff]">
+                  3
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-[#7c3aed]">
+                    3. Generate Recommendations
+                  </div>
+                  <div className="text-[11px] text-[#7c3aed] font-medium">
+                    AI is suggesting fixes...
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 4: Review Changes */}
+              <div className="flex items-start gap-3 relative z-10 opacity-60">
+                <div className="w-7 h-7 rounded-full bg-[#f4f2ec] text-[#7d8b82] border border-[#e6e4df] flex items-center justify-center font-bold text-xs shrink-0">
+                  4
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-[#5c6660]">4. Review Changes</div>
+                  <div className="text-[11px] text-[#8a948e]">Approve or modify</div>
+                </div>
+              </div>
+
+              {/* Step 5: Validate */}
+              <div className="flex items-start gap-3 relative z-10 opacity-60">
+                <div className="w-7 h-7 rounded-full bg-[#f4f2ec] text-[#7d8b82] border border-[#e6e4df] flex items-center justify-center font-bold text-xs shrink-0">
+                  5
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-[#5c6660]">5. Validate</div>
+                  <div className="text-[11px] text-[#8a948e]">Running validations...</div>
+                </div>
+              </div>
+
+              {/* Step 6: Ready to Sync */}
+              <div className="flex items-start gap-3 relative z-10 opacity-60">
+                <div className="w-7 h-7 rounded-full bg-[#f4f2ec] text-[#7d8b82] border border-[#e6e4df] flex items-center justify-center font-bold text-xs shrink-0">
+                  6
+                </div>
+                <div>
+                  <div className="font-semibold text-xs text-[#5c6660]">6. Ready to Sync</div>
+                  <div className="text-[11px] text-[#8a948e]">Prepare synchronization plan</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* COLUMN 2: Analysis Complete & Issues (Center, col-span-4) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Analysis Complete Card with Robot Assistant */}
+            <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-[#111916]">Analysis Complete</h3>
+                  <p className="text-xs text-[#5c6660] mt-0.5 leading-snug">
+                    I found 5 issues that may affect your WooCommerce listing.
+                  </p>
+                </div>
+                <img
+                  src="/assets/robot-assistant.svg"
+                  alt="AI Assistant"
+                  className="w-12 h-12 shrink-0 -mt-1"
+                />
+              </div>
+
+              {/* Gauge and Re-analyze */}
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-14 h-14 flex items-center justify-center">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="15"
+                        fill="none"
+                        stroke="#f4f2ec"
+                        strokeWidth="3.5"
+                      />
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="15"
+                        fill="none"
+                        stroke="#dc2626"
+                        strokeWidth="3.5"
+                        strokeDasharray="94.2"
+                        strokeDashoffset={94.2 * (1 - qualityScore / 100)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="absolute font-mono font-bold text-xs text-[#111916]">
+                      {qualityScore}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-bold text-xs text-[#111916]">
+                      {qualityScore} <span className="text-[#7d8b82] font-normal">/ 100</span>
+                    </div>
+                    <div className="text-[10px] text-[#dc2626] font-semibold">
+                      Needs Attention
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => refetchPlan()}
+                  disabled={loadingPlan}
+                  className="px-2.5 py-1.5 rounded-md border border-[#e6e4df] bg-[#fbfaf8] hover:bg-white text-xs font-medium text-[#19201d] flex items-center gap-1.5 shadow-2xs"
+                >
+                  <RotateCcw
+                    className={`w-3.5 h-3.5 text-[#5c6660] ${loadingPlan ? 'animate-spin' : ''}`}
                   />
-                  <span className="font-mono text-sm font-bold text-slate-900">
-                    {score}<span className="text-xs text-slate-400 font-normal">/100</span>
-                  </span>
-                </div>
+                  <span>Re-analyze</span>
+                </button>
               </div>
-
-              <button
-                onClick={() => refetchPlan()}
-                className="px-2.5 py-1.5 rounded border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors flex items-center gap-1"
-                title="Re-run assessment"
-              >
-                <RotateCcw className={`w-3.5 h-3.5 ${loadingPlan ? 'animate-spin' : ''}`} />
-                Re-evaluate
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 2-Column Grid: Comparison Table (Left) + AI Recommendations (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Comparison Table (Left Column) */}
-          <div className="lg:col-span-7 border border-slate-200 rounded-md bg-white overflow-hidden flex flex-col">
-            <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between">
-              <div className="text-xs font-bold text-slate-800 uppercase tracking-wide text-[11px]">
-                Field Comparison (PIM vs WooCommerce)
-              </div>
-              <span className="text-[11px] text-slate-400">
-                Only discrepancies flagged
-              </span>
             </div>
 
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left text-xs min-w-[480px]">
-                <thead className="bg-slate-50/40 border-b border-slate-200 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">
-                  <tr>
-                    <th className="py-2.5 px-3.5">Field</th>
-                    <th className="py-2.5 px-3.5">PIM Value</th>
-                    <th className="py-2.5 px-3.5">WooCommerce</th>
-                    <th className="py-2.5 px-3.5 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {fields.map((f, i) => (
-                    <tr
-                      key={i}
-                      className={`transition-colors ${
-                        f.isDiff ? 'bg-amber-50/30 hover:bg-amber-50/50' : 'hover:bg-slate-50/60'
-                      }`}
-                    >
-                      <td className="py-2.5 px-3.5 font-medium text-slate-900 whitespace-nowrap">
-                        {f.label}
-                      </td>
-                      <td className="py-2.5 px-3.5 font-mono text-[11.5px] text-slate-800 max-w-[150px] truncate">
-                        {f.pim}
-                      </td>
-                      <td className="py-2.5 px-3.5 font-mono text-[11.5px] text-slate-600 max-w-[150px] truncate">
-                        {f.woo}
-                      </td>
-                      <td className="py-2.5 px-3.5 text-center whitespace-nowrap">
-                        {f.isDiff ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                            Differs
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                            Match
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* AI Recommendation Panel (Right Column) */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="border border-slate-200 rounded-md bg-white p-4 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-600" />
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                    AI Recommendations
-                  </h3>
-                </div>
-                <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded">
-                  Requires Approval
-                </span>
+            {/* Issues Found (5) List (Panel 4) */}
+            <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-[#111916] uppercase tracking-wider">
+                  Issues Found (5)
+                </h3>
               </div>
 
-              {/* Recommendation 1: Category Mismatch */}
-              <div className="p-3 rounded border border-slate-200 bg-slate-50/50 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs font-bold text-slate-900">
-                    Category Mismatch
+              <div className="space-y-2 text-xs">
+                {/* Issue 1 */}
+                <div className="p-2.5 bg-[#fbfaf8] border border-[#e6e4df] rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626]" />
+                    <span className="font-medium text-[#111916]">
+                      Missing product description
+                    </span>
                   </div>
-                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">
-                    Medium
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  WooCommerce uses generic <code className="px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px]">Footwear</code> while PIM specifies <code className="px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px]">Running Shoes</code>.
-                </p>
-                <div className="pt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-medium">Proposed: Map to Running Shoes</span>
-                  <button
-                    onClick={() =>
-                      applyRecommendationMutation.mutate({ field: 'category_id', value: 1 })
-                    }
-                    disabled={appliedRecommendations['category_id']}
-                    className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      appliedRecommendations['category_id']
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    }`}
-                  >
-                    {appliedRecommendations['category_id'] ? (
-                      <>
-                        <Check className="w-3 h-3" />
-                        Applied
-                      </>
-                    ) : (
-                      'Apply Recommendation'
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Recommendation 2: Price Reconciliation */}
-              <div className="p-3 rounded border border-slate-200 bg-slate-50/50 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs font-bold text-slate-900">
-                    Price Discrepancy
-                  </div>
-                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fee2e2] text-[#b91c1c]">
                     High
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  PIM master price is set to <strong className="text-slate-800">₹8,999</strong>, but WooCommerce target is currently <strong className="text-slate-800">₹7,999</strong>. Synchronizing will update remote pricing.
-                </p>
-                <div className="pt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-medium">Action: Enforce PIM Master Price</span>
-                  <button
-                    onClick={() =>
-                      applyRecommendationMutation.mutate({ field: 'regular_price', value: 8999 })
-                    }
-                    disabled={appliedRecommendations['regular_price']}
-                    className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      appliedRecommendations['regular_price']
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    }`}
-                  >
-                    {appliedRecommendations['regular_price'] ? (
-                      <>
-                        <Check className="w-3 h-3" />
-                        Applied
-                      </>
-                    ) : (
-                      'Apply Recommendation'
-                    )}
-                  </button>
-                </div>
-              </div>
 
-              {/* Recommendation 3: SEO Description Enrichment */}
-              <div className="p-3 rounded border border-slate-200 bg-slate-50/50 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="text-xs font-bold text-slate-900">
-                    SEO Description Enrichment
+                {/* Issue 2 */}
+                <div className="p-2.5 bg-[#fbfaf8] border border-[#e6e4df] rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#d97706]" />
+                    <span className="font-medium text-[#111916]">Category mismatch</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded">
-                    Ready
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                    Medium
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Remote description is minimal. PIM contains technical features (cushioning specs, breathable upper, athletic sizing).
-                </p>
-                <div className="pt-1 flex items-center justify-between">
-                  <span className="text-[11px] text-slate-400 font-medium">Action: Push Rich Copy</span>
-                  <button
-                    onClick={() =>
-                      applyRecommendationMutation.mutate({
-                        field: 'description',
-                        value: selectedProduct?.description,
-                      })
-                    }
-                    disabled={appliedRecommendations['description']}
-                    className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors flex items-center gap-1 ${
-                      appliedRecommendations['description']
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    }`}
-                  >
-                    {appliedRecommendations['description'] ? (
-                      <>
-                        <Check className="w-3 h-3" />
-                        Applied
-                      </>
-                    ) : (
-                      'Apply Recommendation'
-                    )}
-                  </button>
+
+                {/* Issue 3 */}
+                <div className="p-2.5 bg-[#fbfaf8] border border-[#e6e4df] rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#d97706]" />
+                    <span className="font-medium text-[#111916]">Missing key attributes</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                    Medium
+                  </span>
+                </div>
+
+                {/* Issue 4 */}
+                <div className="p-2.5 bg-[#fbfaf8] border border-[#e6e4df] rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#15803d]" />
+                    <span className="font-medium text-[#111916]">Price validation</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#f0fdf4] text-[#15803d]">
+                    Low
+                  </span>
+                </div>
+
+                {/* Issue 5 */}
+                <div className="p-2.5 bg-[#fbfaf8] border border-[#e6e4df] rounded-md flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#d97706]" />
+                    <span className="font-medium text-[#111916]">Missing product images</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                    Medium
+                  </span>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Operational notice */}
-            <div className="p-3 rounded border border-slate-200 bg-white text-xs text-slate-500 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>All AI recommendations require human sign-off before publishing to WooCommerce.</span>
+          {/* COLUMN 3: AI Recommendations (Right, col-span-5) */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#7c3aed]" />
+                <h3 className="text-xs font-bold text-[#111916] uppercase tracking-wider">
+                  AI Recommendations
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  applyRecommendationMutation.mutate({
+                    field: 'description',
+                    value: defaultImprovedDesc,
+                  })
+                }
+                className="text-xs font-medium text-[#7c3aed] hover:underline"
+              >
+                Review All
+              </button>
+            </div>
+
+            {/* Recommendation 1: Generate Product Description (Primary Hero Card from Panel 4) */}
+            <div className="bg-white border border-[#e6e4df] rounded-lg p-5 shadow-2xs space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#7c3aed]" />
+                  <span className="font-bold text-xs text-[#111916]">
+                    Generate Product Description
+                  </span>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fee2e2] text-[#b91c1c]">
+                  High
+                </span>
+              </div>
+
+              <p className="text-[11px] text-[#5c6660]">
+                Create a compelling, SEO-friendly product description for WooCommerce.
+              </p>
+
+              {/* Before vs After Boxes */}
+              <div className="space-y-2.5 text-xs">
+                {/* Before */}
+                <div className="p-3 bg-[#fbfaf8] border border-[#e6e4df] rounded-md space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#8a948e]">
+                    Before
+                  </div>
+                  <div className="text-[#5c6660] italic">
+                    {selectedProduct?.description
+                      ? selectedProduct.description.replace(/<[^>]*>/g, '').substring(0, 36) + '...'
+                      : 'Active noise cancelling...'}
+                  </div>
+                  <div className="text-[10px] text-[#a1a8a3]">(24 characters)</div>
+                </div>
+
+                {/* After (AI Generated) */}
+                <div className="p-3 bg-[#f5f3ff] border border-[#ddd6fe] rounded-md space-y-1">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#7c3aed] flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    <span>After (AI Generated)</span>
+                  </div>
+                  <div className="text-[#1e1b4b] leading-relaxed">
+                    {defaultImprovedDesc}
+                  </div>
+                  <div className="text-[10px] text-[#6b21a8] font-medium">
+                    (248 characters · High SEO density)
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={
+                    applyRecommendationMutation.isPending ||
+                    appliedRecommendations['description']
+                  }
+                  onClick={() =>
+                    applyRecommendationMutation.mutate({
+                      field: 'description',
+                      value: defaultImprovedDesc,
+                    })
+                  }
+                  className="flex-1 py-2 px-3 bg-[#15803d] hover:bg-[#166534] disabled:bg-[#a7f3d0] text-white rounded-md text-xs font-semibold shadow-2xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  {appliedRecommendations['description'] ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Applied to Draft</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Apply Recommendation</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => alert('View keyword density & token breakdown')}
+                  className="py-2 px-3 border border-[#e6e4df] bg-white hover:bg-[#f4f2ec] text-[#19201d] rounded-md text-xs font-medium shadow-2xs transition-colors"
+                >
+                  More Details
+                </button>
+              </div>
+            </div>
+
+            {/* Additional Recommendation Accordions (Panel 4) */}
+            <div className="space-y-2">
+              {/* Map Category */}
+              <div className="p-3 bg-white border border-[#e6e4df] rounded-lg flex items-center justify-between text-xs hover:border-[#cbd5e1] transition-colors cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <ChevronRight className="w-3.5 h-3.5 text-[#8a948e]" />
+                  <span className="font-semibold text-[#111916]">
+                    Map Category to WooCommerce
+                  </span>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                  Medium
+                </span>
+              </div>
+
+              {/* Add Missing Attributes */}
+              <div className="p-3 bg-white border border-[#e6e4df] rounded-lg flex items-center justify-between text-xs hover:border-[#cbd5e1] transition-colors cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <ChevronRight className="w-3.5 h-3.5 text-[#8a948e]" />
+                  <span className="font-semibold text-[#111916]">
+                    Add Missing Attributes
+                  </span>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#fef3c7] text-[#92400e]">
+                  Medium
+                </span>
+              </div>
+
+              {/* Optimize Price */}
+              <div className="p-3 bg-white border border-[#e6e4df] rounded-lg flex items-center justify-between text-xs hover:border-[#cbd5e1] transition-colors cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <ChevronRight className="w-3.5 h-3.5 text-[#8a948e]" />
+                  <span className="font-semibold text-[#111916]">Optimize Price</span>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#f0fdf4] text-[#15803d]">
+                  Low
+                </span>
+              </div>
             </div>
           </div>
         </div>

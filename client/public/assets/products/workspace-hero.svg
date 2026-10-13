@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 340" width="600" height="340" fill="none">
+  <!-- Minimalist Clean Desk Workspace Background -->
+  <defs>
+    <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EBE9E2" />
+      <stop offset="60%" stop-color="#DFDDD5" />
+      <stop offset="100%" stop-color="#D5D2C8" />
+    </linearGradient>
+    <linearGradient id="deskGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAF8F5" />
+      <stop offset="100%" stop-color="#EDE9E1" />
+    </linearGradient>
+    <linearGradient id="laptopGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Wall Background -->
+  <rect width="600" height="220" fill="url(#wallGrad)" />
+
+  <!-- Soft sunlight window shadow beam -->
+  <path d="M0 0L240 0L420 220L100 220Z" fill="#FFFFFF" opacity="0.15" />
+
+  <!-- Desk Surface -->
+  <rect y="210" width="600" height="130" fill="url(#deskGrad)" />
+  <line x1="0" y1="210" x2="600" y2="210" stroke="#C8C4B7" stroke-width="2" />
+
+  <!-- Laptop Open at Perspective Angle -->
+  <!-- Screen Lid -->
+  <path d="M180 100L350 75L350 205L180 215Z" fill="#1E293B" stroke="#0F172A" stroke-width="2" />
+  <!-- Display Panel -->
+  <path d="M190 107L340 85L340 197L190 206Z" fill="#0F172A" />
+  <!-- Screen UI Mockup -->
+  <rect x="205" y="115" width="115" height="65" rx="4" fill="#166534" opacity="0.85" />
+  <path d="M220 135L245 155L295 125" stroke="#86EFAC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="262" y="170" font-family="-apple-system, sans-serif" font-size="8" font-weight="bold" fill="#F0FDF4" text-anchor="middle">PIM SENTINEL · LIVE</text>
+  
+  <!-- Laptop Keyboard Base (Perspective) -->
+  <path d="M180 215L350 205L410 245L220 260Z" fill="url(#laptopGrad)" stroke="#64748B" stroke-width="1.5" />
+  <!-- Trackpad -->
+  <path d="M275 235L335 230L345 245L285 250Z" fill="#94A3B8" opacity="0.6" />
+
+  <!-- Coffee Ceramic Mug -->
+  <ellipse cx="450" cy="235" rx="14" ry="5" fill="#000000" opacity="0.12" />
+  <rect x="438" y="195" width="24" height="36" rx="4" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+  <path d="M462 205C468 205 470 215 462 220" stroke="#CBD5E1" stroke-width="2.5" fill="none" />
+  <ellipse cx="450" cy="198" rx="10" ry="4" fill="#583B25" />
+
+  <!-- Minimalist Potted Succulent Plant on Left -->
+  <ellipse cx="120" cy="230" rx="18" ry="6" fill="#000000" opacity="0.1" />
+  <path d="M108 195L112 225H128L132 195Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+  <!-- Succulent Leaves -->
+  <path d="M120 180C110 185 115 195 120 195C125 195 130 185 120 180Z" fill="#16A34A" />
+  <path d="M112 186C105 190 110 198 116 195Z" fill="#22C55E" />
+  <path d="M128 186C135 190 130 198 124 195Z" fill="#15803d" />
+</svg>

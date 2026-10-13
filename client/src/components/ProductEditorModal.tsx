@@ -403,8 +403,8 @@ export const ProductEditorModal: React.FC<Props> = ({ product, isOpen, onClose, 
                     onClick={() => handleCategoryToggle(cat.id)}
                     className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
                       isSelected
-                        ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-semibold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-[#f0fdf4] border-[#15803d] text-[#15803d] font-semibold'
+                        : 'bg-white border-[#e6e4df] text-[#5c6660] hover:bg-[#fbfaf8]'
                     }`}
                   >
                     {cat.name}
@@ -417,14 +417,14 @@ export const ProductEditorModal: React.FC<Props> = ({ product, isOpen, onClose, 
           {/* Section 5: Attributes */}
           {attributes.length > 0 && (
             <div className="space-y-2 pt-2">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#7d8b82] border-b border-[#f4f2ec] pb-1">
                 Product Attributes (Variations / Specs)
               </div>
 
               <div className="space-y-2 pt-1">
                 {attributes.map((attr) => (
-                  <div key={attr.id} className="p-2.5 rounded border border-slate-100 bg-slate-50/50">
-                    <span className="font-semibold text-slate-700 text-[11px] block mb-1.5">
+                  <div key={attr.id} className="p-2.5 rounded border border-[#e6e4df] bg-[#fbfaf8]">
+                    <span className="font-semibold text-[#111916] text-[11px] block mb-1.5">
                       {attr.name}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
@@ -438,8 +438,8 @@ export const ProductEditorModal: React.FC<Props> = ({ product, isOpen, onClose, 
                             onClick={() => handleAttributeOptionToggle(attr.id, opt.value)}
                             className={`px-2 py-0.5 rounded text-[11px] border transition-colors ${
                               isSelected
-                                ? 'bg-indigo-600 border-indigo-600 text-white font-semibold'
-                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                                ? 'bg-[#15803d] border-[#15803d] text-white font-semibold'
+                                : 'bg-white border-[#e6e4df] text-[#19201d] hover:bg-[#f4f2ec]'
                             }`}
                           >
                             {opt.label || opt.value}
@@ -454,18 +454,18 @@ export const ProductEditorModal: React.FC<Props> = ({ product, isOpen, onClose, 
           )}
 
           {/* Footer Submit */}
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-[#e6e4df] flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors"
+              className="px-3.5 py-1.5 rounded border border-[#e6e4df] hover:bg-[#fbfaf8] text-xs font-semibold text-[#5c6660] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saveMutation.isPending}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded bg-[#15803d] hover:bg-[#166534] text-white text-xs font-semibold shadow-2xs disabled:opacity-50 transition-colors"
             >
               {saveMutation.isPending ? (
                 <>

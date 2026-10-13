@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300" fill="none">
+  <rect width="300" height="300" rx="16" fill="#F4F4F3" />
+  
+  <defs>
+    <radialGradient id="bagSh" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="leatherGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8C532B" />
+      <stop offset="60%" stop-color="#6E3D1B" />
+      <stop offset="100%" stop-color="#4F2A10" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <ellipse cx="150" cy="255" rx="75" ry="12" fill="url(#bagSh)" />
+
+  <!-- Shoulder Strap Loop -->
+  <path d="M120 120C120 45 180 45 180 120" stroke="#4F2A10" stroke-width="7" stroke-linecap="round" fill="none" />
+  <circle cx="120" cy="120" r="5" fill="#D97706" />
+  <circle cx="180" cy="120" r="5" fill="#D97706" />
+
+  <!-- Bag Main Body -->
+  <rect x="95" y="115" width="110" height="130" rx="18" fill="url(#leatherGrad)" stroke="#3D200C" stroke-width="2" />
+
+  <!-- Front Flap -->
+  <path d="M95 115H205V180C205 190 195 200 185 200H115C105 200 95 190 95 180V115Z" fill="#7C4420" stroke="#3D200C" stroke-width="2" />
+  <!-- Stitching line -->
+  <path d="M100 118H200V177C200 184 192 194 183 194H117C108 194 100 184 100 177V118Z" stroke="#D97706" stroke-dasharray="3 3" stroke-width="1.2" fill="none" opacity="0.8" />
+
+  <!-- Brass Buckle / Closure Clasp -->
+  <rect x="142" y="185" width="16" height="22" rx="3" fill="#D97706" stroke="#92400E" stroke-width="1.5" />
+  <rect x="145" y="191" width="10" height="10" rx="1" fill="#4F2A10" />
+</svg>

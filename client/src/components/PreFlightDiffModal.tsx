@@ -246,7 +246,7 @@ export const PreFlightDiffModal: React.FC<Props> = ({ productId, isOpen, onClose
               type="button"
               onClick={() => syncMutation.mutate(productId)}
               disabled={syncMutation.isPending || (diffData?.has_conflicts && !conflictResolved)}
-              className="flex items-center gap-2 px-4 py-1.5 rounded text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs active:scale-95 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-1.5 rounded text-xs font-semibold bg-[#15803d] hover:bg-[#166534] text-white shadow-xs active:scale-95 transition-all disabled:opacity-50"
             >
               {syncMutation.isPending ? (
                 <>
