@@ -10,7 +10,7 @@ export const config = {
   ai: {
     provider: process.env.AI_PROVIDER || 'deterministic_fallback',
     apiKey: process.env.AI_API_KEY || '',
-    model: process.env.AI_MODEL || 'gemini-2.0-flash',
+    model: process.env.AI_MODEL || 'gemini-3.8-flash',
   },
   woo: {
     activeDriver: (process.env.WOO_ACTIVE_DRIVER || 'mock') as 'mock' | 'live',

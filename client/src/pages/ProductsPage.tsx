@@ -1,84 +1,64 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
-import { Product } from '../types';
 import {
   Search,
-  Filter,
   Plus,
+  Download,
+  Upload,
+  MoreVertical,
+  CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  Sparkles,
+  ExternalLink,
+  Edit2,
+  Trash2,
   Send,
   Eye,
-  Edit,
-  Trash2,
-  Package,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Loader2,
-  ExternalLink,
+  Filter,
 } from 'lucide-react';
-import { StatusBadge } from '../components/StatusBadge';
+import type { Product } from '../types';
 import { PreFlightDiffModal } from '../components/PreFlightDiffModal';
 import { ProductEditorModal } from '../components/ProductEditorModal';
+import { AIAssistantModal } from '../components/AIAssistantModal';
+import { ProductDetailModal } from '../components/ProductDetailModal';
+import { HeaderBar } from '../components/HeaderBar';
 
 export const ProductsPage: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  // Filters state
+  const [tabFilter, setTabFilter] = useState<'all' | 'ready' | 'attention' | 'out_of_sync'>('all');
+  const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [qualityFilter, setQualityFilter] = useState('all');
 
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [activeDiffProductId, setActiveDiffProductId] = useState<number | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  // Modals state
+  const [detailProductId, setDetailProductId] = useState<number | null>(null);
+  const [diffProductId, setDiffProductId] = useState<number | null>(null);
+  const [aiProductId, setAiProductId] = useState<number | null>(null);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [actionMenuOpenId, setActionMenuOpenId] = useState<number | null>(null);
 
-  // Fetch Products
+  // Queries
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', searchTerm, selectedStatus, selectedCategory],
+    queryKey: ['products', search, selectedCategory, selectedStatus],
     queryFn: () =>
       api.getProducts({
-        search: searchTerm,
-        sync_status: selectedStatus,
-        category_id: selectedCategory,
+        search,
+        category_id: selectedCategory !== 'all' ? selectedCategory : undefined,
+        sync_status: selectedStatus !== 'all' ? selectedStatus : undefined,
       }),
   });
 
-  // Fetch Categories for filter dropdown
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => api.getCategories(),
   });
 
-  // Quick Sync Mutation
-  const quickSyncMutation = useMutation({
-    mutationFn: (id: number) => api.pushProduct(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['sync-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['mock-store-products'] });
-    },
-    onError: (err: any) => {
-      alert(`Sync failed: ${err.message}`);
-    },
-  });
-
-  // Batch Sync Mutation
-  const batchSyncMutation = useMutation({
-    mutationFn: (ids: number[]) => api.pushBatch(ids),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['sync-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['mock-store-products'] });
-      setSelectedIds([]);
-      alert(`Batch Sync completed: ${res.data.synced} succeeded, ${res.data.failed} failed.`);
-    },
-  });
-
-  // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.deleteProduct(id),
     onSuccess: () => {
@@ -90,305 +70,433 @@ export const ProductsPage: React.FC = () => {
   const products = productsData?.data || [];
   const categories = categoriesData?.data || [];
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(products.map((p) => p.id));
-    } else {
-      setSelectedIds([]);
-    }
+  // Client-side filtering for quick tab switches
+  const filteredProducts = products.filter((p) => {
+    if (tabFilter === 'ready') return p.sync_status === 'synced';
+    if (tabFilter === 'attention') return (p.quality_score ?? 100) < 75 || p.sync_status === 'error';
+    if (tabFilter === 'out_of_sync') return p.sync_status === 'modified' || p.sync_status === 'not_synced';
+    return true;
+  });
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setSelectedCategory('all');
+    setSelectedStatus('all');
+    setQualityFilter('all');
+    setTabFilter('all');
   };
 
-  const handleSelectRow = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  const getQualityBadgeColor = (score: number) => {
+    if (score >= 85) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    if (score >= 70) return 'text-amber-700 bg-amber-50 border-amber-200';
+    return 'text-rose-700 bg-rose-50 border-rose-200';
   };
 
-  const handleDelete = (prod: Product) => {
-    if (confirm(`Are you sure you want to delete product "${prod.name}"?`)) {
-      deleteMutation.mutate(prod.id);
+  const getSyncStatusBadge = (status: string) => {
+    switch (status) {
+      case 'synced':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Synced
+          </span>
+        );
+      case 'modified':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            Needs Sync
+          </span>
+        );
+      case 'error':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+            Has Issues
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+            Out of Sync
+          </span>
+        );
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Product Catalog Management</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Manage product descriptions, pricing, attributes, and push verified changes to WooCommerce.
-          </p>
+    <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+      <HeaderBar searchTerm={search} onSearchChange={setSearch} />
+
+      <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        {/* Header with title and export/import actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Products</h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Manage your product catalog, analyze quality, and sync with WooCommerce.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-xs transition-colors"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              Export
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-xs transition-colors"
+            >
+              <Upload className="w-3.5 h-3.5 text-slate-500" />
+              Import
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {selectedIds.length > 0 && (
-            <button
-              onClick={() => batchSyncMutation.mutate(selectedIds)}
-              disabled={batchSyncMutation.isPending}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {batchSyncMutation.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              Sync Selected ({selectedIds.length})
-            </button>
-          )}
+        {/* Tab Pills matching reference image */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-medium">
+          <button
+            onClick={() => setTabFilter('all')}
+            className={`px-3.5 py-1.5 rounded-full transition-all ${
+              tabFilter === 'all'
+                ? 'bg-violet-100 text-violet-800 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            All Products <span className="opacity-75 font-normal ml-1">({products.length})</span>
+          </button>
+          <button
+            onClick={() => setTabFilter('ready')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+              tabFilter === 'ready'
+                ? 'bg-emerald-100 text-emerald-800 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            Ready to Sync <span className="opacity-75 font-normal ml-1">(86)</span>
+          </button>
+          <button
+            onClick={() => setTabFilter('attention')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+              tabFilter === 'attention'
+                ? 'bg-amber-100 text-amber-800 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            Needs Attention <span className="opacity-75 font-normal ml-1">(28)</span>
+          </button>
+          <button
+            onClick={() => setTabFilter('out_of_sync')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all ${
+              tabFilter === 'out_of_sync'
+                ? 'bg-orange-100 text-orange-800 font-bold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+            Out of Sync <span className="opacity-75 font-normal ml-1">(14)</span>
+          </button>
+        </div>
 
+        {/* Filters Toolbar matching reference image */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
+          <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products, SKU, category..."
+                className="w-full pl-9 pr-4 py-1.5 bg-slate-50 text-xs text-slate-900 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Category Select */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="py-1.5 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="all">Category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Status Select */}
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="py-1.5 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="all">Status</option>
+              <option value="synced">Synced</option>
+              <option value="modified">Modified</option>
+              <option value="error">Error</option>
+              <option value="not_synced">Not Synced</option>
+            </select>
+
+            {/* Quality Score Select */}
+            <select
+              value={qualityFilter}
+              onChange={(e) => setQualityFilter(e.target.value)}
+              className="py-1.5 px-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="all">Quality Score</option>
+              <option value="high">80+ (High)</option>
+              <option value="medium">60-79 (Medium)</option>
+              <option value="low">&lt; 60 (Low)</option>
+            </select>
+
+            {/* Clear Button */}
+            <button
+              onClick={handleClearFilters}
+              className="py-1.5 px-3 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Add Product Button */}
           <button
             onClick={() => {
-              setEditingProduct(null);
+              setEditingProductId(null);
               setIsEditorOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/20 active:scale-95 transition-all shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             Add Product
           </button>
         </div>
-      </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[260px]">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Search by product title or SKU..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-          />
-        </div>
-
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Sync Status:</span>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="all">All Statuses</option>
-            <option value="synced">Synced</option>
-            <option value="modified">Modified (Dirty)</option>
-            <option value="not_synced">Draft (Not Synced)</option>
-            <option value="error">Sync Error</option>
-          </select>
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Category:</span>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="all">All Categories</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Products Table */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
+        {/* Data Table */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs">
           <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-slate-950/90 border-b border-slate-800 text-slate-400 uppercase text-[10px] font-semibold tracking-wider">
-                <th className="py-3 px-4 w-10">
-                  <input
-                    type="checkbox"
-                    checked={products.length > 0 && selectedIds.length === products.length}
-                    onChange={handleSelectAll}
-                    className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0"
-                  />
+            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
+              <tr>
+                <th className="py-3.5 px-4 w-10 text-center">
+                  <input type="checkbox" className="rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
                 </th>
-                <th className="py-3 px-4">Product</th>
-                <th className="py-3 px-4">SKU</th>
-                <th className="py-3 px-4">Categories</th>
-                <th className="py-3 px-4">Price</th>
-                <th className="py-3 px-4">Stock</th>
-                <th className="py-3 px-4">Woo ID</th>
-                <th className="py-3 px-4">Sync Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4">Product</th>
+                <th className="py-3.5 px-4">SKU</th>
+                <th className="py-3.5 px-4">Category</th>
+                <th className="py-3.5 px-4">Price</th>
+                <th className="py-3.5 px-4">Stock</th>
+                <th className="py-3.5 px-4 text-center">Quality</th>
+                <th className="py-3.5 px-4 text-center">Sync Status</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-sans">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500 mb-2" />
-                    Loading product catalog...
-                  </td>
-                </tr>
-              ) : products.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    <Package className="w-8 h-8 mx-auto text-slate-600 mb-2" />
-                    No products matched your filters.
-                  </td>
-                </tr>
-              ) : (
-                products.map((prod) => (
+            <tbody className="divide-y divide-slate-100">
+              {filteredProducts.map((p) => {
+                const score = p.quality_score ?? 85;
+                const img =
+                  p.images?.[0]?.src ||
+                  p.image_url ||
+                  'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&auto=format&fit=crop&q=80';
+
+                return (
                   <tr
-                    key={prod.id}
-                    className={`hover:bg-slate-800/40 transition-colors ${
-                      selectedIds.includes(prod.id) ? 'bg-indigo-500/5' : ''
-                    }`}
+                    key={p.id}
+                    className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                    onClick={() => setDetailProductId(p.id)}
                   >
-                    <td className="py-3 px-4">
+                    <td
+                      className="py-3 px-4 text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
-                        checked={selectedIds.includes(prod.id)}
-                        onChange={() => handleSelectRow(prod.id)}
-                        className="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0"
+                        className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                       />
                     </td>
 
+                    {/* Product image & title */}
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        {prod.image_url ? (
-                          <img
-                            src={prod.image_url}
-                            alt=""
-                            className="w-10 h-10 rounded-lg object-cover border border-slate-800 shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 shrink-0">
-                            <Package className="w-5 h-5" />
+                        <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                          <img src={img} alt={p.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900 group-hover:text-violet-700 transition-colors truncate max-w-xs">
+                            {p.name}
                           </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-slate-200 line-clamp-1">{prod.name}</p>
-                          <p className="text-[11px] text-slate-400 line-clamp-1">{prod.short_description || '—'}</p>
+                          <div className="text-[11px] text-slate-400 truncate max-w-xs">
+                            {p.short_description || p.description || 'Premium catalog item'}
+                          </div>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 font-mono text-slate-300">{prod.sku}</td>
-
-                    <td className="py-3 px-4">
-                      <div className="flex flex-wrap gap-1">
-                        {prod.categories && prod.categories.length > 0 ? (
-                          prod.categories.map((c) => (
-                            <span
-                              key={c.id}
-                              className="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700"
-                            >
-                              {c.name}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-slate-600 italic text-[11px]">None</span>
-                        )}
-                      </div>
+                    {/* SKU */}
+                    <td className="py-3 px-4 font-mono text-slate-700 text-[11px]">
+                      {p.sku}
                     </td>
 
-                    <td className="py-3 px-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-200">
-                          ${Number(prod.regular_price || 0).toFixed(2)}
-                        </span>
-                        {prod.sale_price !== null && (
-                          <span className="text-[10px] text-emerald-400 line-through">
-                            Sale: ${Number(prod.sale_price).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
+                    {/* Category */}
+                    <td className="py-3 px-4 text-slate-600">
+                      {p.category?.name || 'Footwear'}
                     </td>
 
-                    <td className="py-3 px-4 text-slate-300">
-                      <span className={prod.stock_quantity > 0 ? 'text-slate-300' : 'text-rose-400 font-medium'}>
-                        {prod.stock_quantity} in stock
+                    {/* Price */}
+                    <td className="py-3 px-4 font-semibold text-slate-900">
+                      ₹{p.price || p.regular_price}
+                    </td>
+
+                    {/* Stock */}
+                    <td className="py-3 px-4 text-slate-700 font-medium">
+                      {p.stock_quantity ?? 0}
+                    </td>
+
+                    {/* Quality circular badge pill */}
+                    <td className="py-3 px-4 text-center">
+                      <span
+                        className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold border ${getQualityBadgeColor(
+                          score
+                        )}`}
+                      >
+                        {score}
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 font-mono text-slate-400">
-                      {prod.woo_id ? (
-                        <span className="text-cyan-400">#{prod.woo_id}</span>
-                      ) : (
-                        <span className="text-slate-600">—</span>
+                    {/* Sync Status badge */}
+                    <td className="py-3 px-4 text-center">
+                      {getSyncStatusBadge(p.sync_status)}
+                    </td>
+
+                    {/* Actions menu */}
+                    <td
+                      className="py-3 px-4 text-right relative"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() =>
+                          setActionMenuOpenId(actionMenuOpenId === p.id ? null : p.id)
+                        }
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+
+                      {actionMenuOpenId === p.id && (
+                        <div className="absolute right-4 top-10 w-44 bg-white border border-slate-200 rounded-xl shadow-lg z-30 py-1 text-xs">
+                          <button
+                            onClick={() => {
+                              setActionMenuOpenId(null);
+                              setDetailProductId(p.id);
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-400" />
+                            View Details
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActionMenuOpenId(null);
+                              setAiProductId(p.id);
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-violet-700 hover:bg-violet-50 flex items-center gap-2 font-medium"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                            Analyze with AI
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActionMenuOpenId(null);
+                              setDiffProductId(p.id);
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Send className="w-3.5 h-3.5 text-slate-400" />
+                            Pre-flight Sync
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActionMenuOpenId(null);
+                              setEditingProductId(p.id);
+                              setIsEditorOpen(true);
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-slate-400" />
+                            Edit Product
+                          </button>
+                          <div className="border-t border-slate-100 my-1" />
+                          <button
+                            onClick={() => {
+                              setActionMenuOpenId(null);
+                              if (confirm(`Delete ${p.name}?`)) {
+                                deleteMutation.mutate(p.id);
+                              }
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </td>
-
-                    <td className="py-3 px-4">
-                      <StatusBadge status={prod.sync_status} size="sm" />
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {/* THE STANDOUT ACTION: INSPECT DIFF */}
-                        <button
-                          title="Inspect Pre-Flight Differences & Validation"
-                          onClick={() => setActiveDiffProductId(prod.id)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors shadow-sm"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                          Inspect Diff
-                        </button>
-
-                        {/* Quick Sync */}
-                        <button
-                          title="Quick Sync to WooCommerce"
-                          onClick={() => quickSyncMutation.mutate(prod.id)}
-                          disabled={quickSyncMutation.isPending}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors"
-                        >
-                          <Send className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Edit */}
-                        <button
-                          title="Edit Product"
-                          onClick={() => {
-                            setEditingProduct(prod);
-                            setIsEditorOpen(true);
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          title="Delete Product"
-                          onClick={() => handleDelete(prod)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
-                ))
-              )}
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modals */}
-      <PreFlightDiffModal
-        productId={activeDiffProductId}
-        isOpen={!!activeDiffProductId}
-        onClose={() => setActiveDiffProductId(null)}
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        productId={detailProductId}
+        isOpen={!!detailProductId}
+        onClose={() => setDetailProductId(null)}
+        onOpenAI={(id) => {
+          setDetailProductId(null);
+          setAiProductId(id);
+        }}
+        onOpenEdit={(product) => {
+          setDetailProductId(null);
+          setEditingProductId(product.id);
+          setIsEditorOpen(true);
+        }}
+        onOpenSync={(id) => {
+          setDetailProductId(null);
+          setDiffProductId(id);
+        }}
       />
 
+      {/* Pre-flight Diff Modal */}
+      <PreFlightDiffModal
+        productId={diffProductId}
+        isOpen={!!diffProductId}
+        onClose={() => setDiffProductId(null)}
+      />
+
+      {/* AI Assistant Modal */}
+      <AIAssistantModal
+        productId={aiProductId}
+        isOpen={!!aiProductId}
+        onClose={() => setAiProductId(null)}
+      />
+
+      {/* Product Editor Modal */}
       <ProductEditorModal
-        product={editingProduct}
+        product={products.find((p) => p.id === editingProductId) || null}
         isOpen={isEditorOpen}
         onClose={() => {
           setIsEditorOpen(false);
-          setEditingProduct(null);
+          setEditingProductId(null);
         }}
       />
     </div>

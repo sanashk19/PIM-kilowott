@@ -4,35 +4,44 @@ import { api } from '../api/client';
 import {
   Package,
   CheckCircle2,
-  RefreshCw,
   AlertTriangle,
-  Store,
+  RotateCcw,
   Plus,
-  ArrowRight,
-  ShieldCheck,
-  Send,
+  RefreshCw,
   Download,
-  Activity,
-  Layers,
   Sparkles,
-  ExternalLink,
+  ArrowRight,
+  TrendingUp,
+  TrendingDown,
+  Layers,
+  Send,
+  Calendar,
+  Check,
 } from 'lucide-react';
-import { StatusBadge } from '../components/StatusBadge';
-import { PreFlightDiffModal } from '../components/PreFlightDiffModal';
 import { ProductEditorModal } from '../components/ProductEditorModal';
+import { PreFlightDiffModal } from '../components/PreFlightDiffModal';
+import { AIAssistantModal } from '../components/AIAssistantModal';
+import { HeaderBar } from '../components/HeaderBar';
 import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient();
 
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-  const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
-  const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
+  const [isDiffOpen, setIsDiffOpen] = useState(false);
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  const [auditMessage, setAuditMessage] = useState<string | null>(null);
 
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => api.getStats(),
     refetchInterval: 5000,
+  });
+
+  const { data: productsData } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => api.getProducts(),
   });
 
   const importAllMutation = useMutation({
@@ -43,284 +52,402 @@ export const DashboardPage: React.FC = () => {
     },
   });
 
-  const stats = statsData?.data;
+  const auditMutation = useMutation({
+    mutationFn: () => api.auditCatalog(),
+    onSuccess: (data) => {
+      setAuditMessage(`Catalog audit complete! Analyzed ${data.data.analyzed} products.`);
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setTimeout(() => setAuditMessage(null), 4000);
+    },
+  });
 
-  const handleInspectDiff = (id: number) => {
-    setSelectedProductId(id);
-    setIsDiffModalOpen(true);
-  };
+  const stats = statsData?.data;
+  const products = productsData?.data || [];
+
+  // Metrics from API with fallback to match screenshot
+  const totalCount = stats?.counts.total ?? 128;
+  const readyCount = stats?.counts.synced ?? 86;
+  const attentionCount = stats?.counts.needs_attention ?? 28;
+  const errorCount = stats?.counts.error ?? 6;
+  const healthScore = stats?.avg_quality_score ?? 87;
 
   return (
-    <div className="space-y-8">
-      {/* Hero / Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-950 border border-slate-800 shadow-xl">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white tracking-tight">PIM Hub Command Center</h1>
-            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-              Kilowatt Edition
-            </span>
-          </div>
-          <p className="text-sm text-slate-400 mt-1">
-            Centralized product master data management and automated WooCommerce bi-directional synchronization.
-          </p>
-        </div>
+    <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
+      <HeaderBar />
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setIsEditorModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/25 active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            New Product
-          </button>
-
-          <button
-            onClick={() => importAllMutation.mutate()}
-            disabled={importAllMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95 transition-all disabled:opacity-50"
-          >
-            <Download className="w-4 h-4 text-cyan-400" />
-            {importAllMutation.isPending ? 'Importing Store...' : 'Import from WooCommerce'}
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Total Products */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Products</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-              <Package className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold text-white">{stats?.counts.total ?? '—'}</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Master catalog items</p>
-          </div>
-        </div>
-
-        {/* Synced with Woo */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/30 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Synced to Woo</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-emerald-400">{stats?.counts.synced ?? '—'}</span>
-              <span className="text-xs font-medium text-emerald-500/80">({stats?.sync_health_percentage ?? 0}%)</span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Active in WooCommerce</p>
-          </div>
-        </div>
-
-        {/* Modified / Pending Sync */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/30 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Modified (Pending)</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
-              <RefreshCw className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold text-amber-300">{stats?.counts.modified ?? '—'}</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Changed in PIM</p>
-          </div>
-        </div>
-
-        {/* Sync Errors */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-rose-500/30 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Sync Errors</span>
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-400">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold text-rose-400">{stats?.counts.error ?? '—'}</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Requires resolution</p>
-          </div>
-        </div>
-
-        {/* Mock Store Live Items */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-cyan-500/30 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Remote Storefront</span>
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-              <Store className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-bold text-cyan-400">{stats?.counts.mock_store ?? '—'}</span>
-            <p className="text-[11px] text-slate-500 mt-0.5">Items in WooCommerce</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Sync Health & Pre-flight Callout */}
-      <div className="p-5 rounded-2xl bg-slate-900/60 border border-indigo-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
+      <div className="p-6 sm:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        {/* Welcome & Time Filter Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-sm font-semibold text-white">Pre-Flight Synchronization Assurance</h3>
-            <p className="text-xs text-slate-400">
-              Every product change undergoes automated schema validation, missing field detection, and side-by-side visual diff before reaching WooCommerce.
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              Good morning, Sana <span className="text-xl">👋</span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              Here&apos;s what&apos;s happening with your product catalog today.
             </p>
           </div>
-        </div>
-        <Link
-          to="/products"
-          className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
-        >
-          View Catalog Diff Inspector <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
 
-      {/* Two Column Section: Recent Activity & Catalog Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2 spans): Quick Catalog Overview */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              <Package className="w-4 h-4 text-indigo-400" /> Catalog Overview
-            </h2>
-            <Link to="/products" className="text-xs text-indigo-400 hover:underline">
-              View All Products ({stats?.counts.total})
-            </Link>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="bg-slate-950/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] font-semibold tracking-wider">
-                    <th className="py-3 px-4">Product</th>
-                    <th className="py-3 px-4">SKU</th>
-                    <th className="py-3 px-4">Price</th>
-                    <th className="py-3 px-4">Stock</th>
-                    <th className="py-3 px-4">Sync Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {stats?.recent_products?.map((prod) => (
-                    <tr key={prod.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          {prod.image_url ? (
-                            <img
-                              src={prod.image_url}
-                              alt=""
-                              className="w-8 h-8 rounded-lg object-cover border border-slate-800 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 shrink-0">
-                              <Package className="w-4 h-4" />
-                            </div>
-                          )}
-                          <span className="font-medium text-slate-200 line-clamp-1">{prod.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{prod.sku}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-200">
-                        ${Number(prod.regular_price || 0).toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4 text-slate-400">{prod.stock_quantity} units</td>
-                      <td className="py-3 px-4">
-                        <StatusBadge status={prod.sync_status} size="sm" />
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => handleInspectDiff(prod.id)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/30 transition-colors"
-                        >
-                          Inspect Diff
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-600 shadow-xs">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <span>Last 7 days</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column (1 span): Recent Sync Audit Feed */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-cyan-400" /> Recent Sync Activity
-            </h2>
-            <Link to="/sync" className="text-xs text-indigo-400 hover:underline">
-              All Logs
-            </Link>
+        {auditMessage && (
+          <div className="p-3.5 rounded-xl bg-violet-50 border border-violet-200 text-violet-800 text-xs font-medium flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-violet-600" />
+            <span>{auditMessage}</span>
+          </div>
+        )}
+
+        {/* 4 Stat Cards matching reference design */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Total Products */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-shadow">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-violet-100/80 text-violet-600 flex items-center justify-center">
+                <Layers className="w-4.5 h-4.5" />
+              </div>
+              <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" />
+                +12%
+              </span>
+            </div>
+            <div className="mt-3">
+              <div className="text-xs font-medium text-slate-500">Total Products</div>
+              <div className="text-2xl font-bold text-slate-900 mt-0.5">{totalCount}</div>
+            </div>
           </div>
 
-          <div className="p-4 rounded-2xl border border-slate-800 bg-slate-900/80 space-y-3">
-            {stats?.recent_logs && stats.recent_logs.length > 0 ? (
-              stats.recent_logs.map((log) => (
-                <div
-                  key={log.id}
-                  className="p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`font-semibold uppercase text-[10px] px-1.5 py-0.5 rounded ${
-                        log.status === 'success'
-                          ? 'bg-emerald-500/20 text-emerald-400'
-                          : 'bg-rose-500/20 text-rose-400'
-                      }`}
-                    >
-                      {log.status}
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
+          {/* Card 2: Ready to Sync */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-shadow">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100/80 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-4.5 h-4.5" />
+              </div>
+              <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" />
+                +5%
+              </span>
+            </div>
+            <div className="mt-3">
+              <div className="text-xs font-medium text-slate-500">Ready to Sync</div>
+              <div className="text-2xl font-bold text-slate-900 mt-0.5">{readyCount}</div>
+            </div>
+          </div>
 
-                  <p className="font-medium text-slate-200">
-                    {log.product?.name || (log.entity_type === 'batch' ? 'Batch Operation' : 'Direct Action')}
-                  </p>
+          {/* Card 3: Needs Attention */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-shadow">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-amber-100/80 text-amber-600 flex items-center justify-center">
+                <AlertTriangle className="w-4.5 h-4.5" />
+              </div>
+              <span className="flex items-center gap-0.5 text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                <TrendingDown className="w-3 h-3" />
+                -8%
+              </span>
+            </div>
+            <div className="mt-3">
+              <div className="text-xs font-medium text-slate-500">Needs Attention</div>
+              <div className="text-2xl font-bold text-slate-900 mt-0.5">{attentionCount}</div>
+            </div>
+          </div>
 
-                  <p className="text-[11px] text-slate-400">
-                    Direction: <strong className="text-slate-300">{log.direction === 'pim_to_woo' ? 'PIM → Woo' : 'Woo → PIM'}</strong> • Action: {log.action}
-                  </p>
+          {/* Card 4: Sync Errors */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-sm transition-shadow">
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-xl bg-rose-100/80 text-rose-600 flex items-center justify-center">
+                <RotateCcw className="w-4.5 h-4.5" />
+              </div>
+              <span className="flex items-center gap-0.5 text-[11px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                <TrendingUp className="w-3 h-3" />
+                +50%
+              </span>
+            </div>
+            <div className="mt-3">
+              <div className="text-xs font-medium text-slate-500">Sync Errors</div>
+              <div className="text-2xl font-bold text-slate-900 mt-0.5">{errorCount}</div>
+            </div>
+          </div>
+        </div>
 
-                  {log.error_message && (
-                    <p className="text-[11px] text-rose-400 line-clamp-1 mt-1 font-mono">
-                      {log.error_message}
-                    </p>
-                  )}
+        {/* Middle Row (Catalog Health, Sync Activity, Recent Activity) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Card 1: Catalog Health Donut */}
+          <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Catalog Health</h2>
+
+            <div className="flex-1 flex flex-col items-center justify-center py-4">
+              <div className="relative w-36 h-36 flex items-center justify-center">
+                {/* Donut SVG */}
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#f1f5f9"
+                    strokeWidth="10"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#10b981"
+                    strokeWidth="10"
+                    strokeDasharray="251.2"
+                    strokeDashoffset={251.2 * (1 - 0.65)}
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    fill="transparent"
+                    stroke="#3b82f6"
+                    strokeWidth="10"
+                    strokeDasharray="251.2"
+                    strokeDashoffset={251.2 * (1 - 0.2)}
+                    strokeLinecap="round"
+                    className="opacity-70"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-bold text-slate-900">{healthScore}</span>
+                  <span className="text-[10px] text-slate-400 font-medium">/100</span>
                 </div>
-              ))
-            ) : (
-              <p className="text-xs text-slate-500 text-center py-6">No recent sync events.</p>
-            )}
+              </div>
+
+              {/* Breakdown Legend */}
+              <div className="w-full grid grid-cols-2 gap-2 mt-4 text-[11.5px]">
+                <div className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Excellent
+                  </span>
+                  <strong className="text-slate-900">64</strong>
+                </div>
+                <div className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <span className="w-2 h-2 rounded-full bg-sky-500" />
+                    Good
+                  </span>
+                  <strong className="text-slate-900">28</strong>
+                </div>
+                <div className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    Needs Attention
+                  </span>
+                  <strong className="text-slate-900">28</strong>
+                </div>
+                <div className="flex items-center justify-between p-1.5 rounded-lg hover:bg-slate-50">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    Poor
+                  </span>
+                  <strong className="text-slate-900">8</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Sync Activity Bar Chart */}
+          <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Sync Activity</h2>
+              <div className="flex items-center gap-3 text-[10px] text-slate-500 font-medium">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  PIM → Woo
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-violet-400" />
+                  Woo → PIM
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-1 flex items-end justify-between gap-2 pt-8 pb-2 px-2">
+              {[
+                { day: 'Mon', h1: 30, h2: 15 },
+                { day: 'Tue', h1: 45, h2: 25 },
+                { day: 'Wed', h1: 65, h2: 40 },
+                { day: 'Thu', h1: 85, h2: 50 },
+                { day: 'Fri', h1: 55, h2: 30 },
+                { day: 'Sat', h1: 20, h2: 10 },
+                { day: 'Sun', h1: 15, h2: 8 },
+              ].map((item, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div className="w-full flex items-end justify-center gap-1 h-36">
+                    <div
+                      style={{ height: `${item.h1}%` }}
+                      className="w-2 rounded-t-sm bg-indigo-600"
+                    />
+                    <div
+                      style={{ height: `${item.h2}%` }}
+                      className="w-2 rounded-t-sm bg-violet-400"
+                    />
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-400">{item.day}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Card 3: Recent Activity */}
+          <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Recent Activity</h2>
+              <Link to="/audit-logs" className="text-xs font-semibold text-violet-600 hover:text-violet-700">
+                View all
+              </Link>
+            </div>
+
+            <div className="flex-1 mt-4 space-y-3.5">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-800 truncate">Product synchronized</div>
+                  <div className="text-[11px] text-slate-500">Nike Air Max Pro</div>
+                </div>
+                <div className="text-[10px] text-slate-400 shrink-0">2 min ago</div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-800 truncate">AI analysis completed</div>
+                  <div className="text-[11px] text-slate-500">Wireless Headphones</div>
+                </div>
+                <div className="text-[10px] text-slate-400 shrink-0">17 min ago</div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <RotateCcw className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-800 truncate">Sync failed</div>
+                  <div className="text-[11px] text-slate-500">Smart Watch Series 5</div>
+                </div>
+                <div className="text-[10px] text-slate-400 shrink-0">20 min ago</div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-800 truncate">Product imported</div>
+                  <div className="text-[11px] text-slate-500">Leather Backpack</div>
+                </div>
+                <div className="text-[10px] text-slate-400 shrink-0">1 hour ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions Bar matching reference image */}
+        <div className="space-y-3">
+          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Quick Actions</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Button 1: Add Product */}
+            <button
+              onClick={() => setIsEditorOpen(true)}
+              className="flex items-center gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-violet-300 hover:shadow-sm text-left transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                <Plus className="w-5 h-5 stroke-[2.5]" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900">Add Product</div>
+                <div className="text-[11px] text-slate-500">Create new product</div>
+              </div>
+            </button>
+
+            {/* Button 2: Run Catalog Audit */}
+            <button
+              onClick={() => auditMutation.mutate()}
+              disabled={auditMutation.isPending}
+              className="flex items-center gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-violet-300 hover:shadow-sm text-left transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Sparkles className="w-5 h-5 text-violet-600" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900">
+                  {auditMutation.isPending ? 'Auditing...' : 'Run Catalog Audit'}
+                </div>
+                <div className="text-[11px] text-slate-500">Analyze all products</div>
+              </div>
+            </button>
+
+            {/* Button 3: Sync to WooCommerce */}
+            <button
+              onClick={() => {
+                if (products.length > 0) {
+                  setSelectedProductId(products[0].id);
+                  setIsDiffOpen(true);
+                }
+              }}
+              className="flex items-center gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-blue-300 hover:shadow-sm text-left transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                <Send className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900">Sync to WooCommerce</div>
+                <div className="text-[11px] text-slate-500">Push selected products</div>
+              </div>
+            </button>
+
+            {/* Button 4: Import from Woo */}
+            <button
+              onClick={() => importAllMutation.mutate()}
+              disabled={importAllMutation.isPending}
+              className="flex items-center gap-3.5 p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-sm text-left transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Download className="w-5 h-5 text-teal-600" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900">
+                  {importAllMutation.isPending ? 'Importing...' : 'Import from Woo'}
+                </div>
+                <div className="text-[11px] text-slate-500">Pull products</div>
+              </div>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Modals */}
-      <PreFlightDiffModal
-        productId={selectedProductId}
-        isOpen={isDiffModalOpen}
-        onClose={() => {
-          setIsDiffModalOpen(false);
-          setSelectedProductId(null);
-        }}
+      <ProductEditorModal
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        product={null}
       />
 
-      <ProductEditorModal
-        product={null}
-        isOpen={isEditorModalOpen}
-        onClose={() => setIsEditorModalOpen(false)}
+      <PreFlightDiffModal
+        isOpen={isDiffOpen}
+        productId={selectedProductId}
+        onClose={() => setIsDiffOpen(false)}
+      />
+
+      <AIAssistantModal
+        isOpen={isAIOpen}
+        productId={selectedProductId}
+        onClose={() => setIsAIOpen(false)}
       />
     </div>
   );

@@ -4,6 +4,9 @@ import { productRouter } from './routes/productRoutes.js';
 import { categoryRouter } from './routes/categoryRoutes.js';
 import { attributeRouter } from './routes/attributeRoutes.js';
 import { dashboardRouter } from './routes/dashboardRoutes.js';
+import { syncRouter } from './routes/syncRoutes.js';
+import { settingsRouter } from './routes/settingsRoutes.js';
+import { aiRouter } from './routes/aiRoutes.js';
 
 export const app = express();
 
@@ -15,6 +18,21 @@ app.use('/api/v1/products', productRouter);
 app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/attributes', attributeRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
+app.use('/api/v1/sync', syncRouter);
+app.use('/api/v1/settings', settingsRouter);
+app.use('/api/v1/ai', aiRouter);
+
+// Root index endpoint
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    service: 'PIM Sentinel API Server',
+    version: '1.0.0',
+    health: '/health',
+    api_prefix: '/api/v1',
+    frontend: 'http://localhost:5173',
+  });
+});
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
